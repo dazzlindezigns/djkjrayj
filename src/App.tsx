@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import BookingDetail from './pages/BookingDetail';
 import ClientForm from './pages/ClientForm';
 import Sign from './pages/Sign';
+import BookingLanding from './pages/BookingLanding';
 import type { Session } from '@supabase/supabase-js';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -41,7 +42,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<BookingLanding />} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
