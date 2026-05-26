@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --orange: #f97316;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  margin: 0;
+}
+
+p,
+span,
+label,
+input,
+textarea,
+select,
+button {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Input base styles */
+input,
+textarea,
+select {
+  background-color: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  width: 100%;
+  transition: border-color 0.2s ease;
+  font-size: 1rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+select option {
+  background-color: var(--surface2);
+  color: var(--text);
+}
+
+/* Button base styles */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Link reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Utility classes */
+.font-heading {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.font-body {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: 1rem 0;
+}
