@@ -1,10 +1,7 @@
 -- Create djkj schema
 create schema if not exists djkj;
 
--- Set search path
-set search_path to djkj;
-
-create table djkj.clients (
+create table if not exists djkj.clients (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(),
   name text not null,
@@ -13,7 +10,7 @@ create table djkj.clients (
   notes text
 );
 
-create table djkj.bookings (
+create table if not exists djkj.bookings (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
@@ -39,7 +36,7 @@ create table djkj.bookings (
   inquiry_token uuid default gen_random_uuid() unique
 );
 
-create table djkj.email_log (
+create table if not exists djkj.email_log (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz default now(),
   booking_id uuid references djkj.bookings(id) on delete cascade,
@@ -49,12 +46,19 @@ create table djkj.email_log (
   status text default 'sent'
 );
 
--- RLS policies
+-- RLS
 alter table djkj.clients enable row level security;
 alter table djkj.bookings enable row level security;
 alter table djkj.email_log enable row level security;
 
--- Authenticated users can do everything on clients and bookings
+-- Policies (drop first so re-running is safe)
+drop policy if exists "auth_full_access_clients" on djkj.clients;
+drop policy if exists "auth_full_access_bookings" on djkj.bookings;
+drop policy if exists "auth_full_access_email_log" on djkj.email_log;
+drop policy if exists "public_read_booking_by_token" on djkj.bookings;
+drop policy if exists "public_update_booking_by_token" on djkj.bookings;
+drop policy if exists "public_read_booking_for_sign" on djkj.bookings;
+
 create policy "auth_full_access_clients" on djkj.clients
   for all to authenticated using (true) with check (true);
 
@@ -64,20 +68,14 @@ create policy "auth_full_access_bookings" on djkj.bookings
 create policy "auth_full_access_email_log" on djkj.email_log
   for all to authenticated using (true) with check (true);
 
--- Public can read booking by inquiry_token (for client form)
 create policy "public_read_booking_by_token" on djkj.bookings
-  for select to anon
-  using (inquiry_token is not null);
+  for select to anon using (inquiry_token is not null);
 
--- Public can update booking by inquiry_token (for client form submission)
 create policy "public_update_booking_by_token" on djkj.bookings
-  for update to anon
-  using (inquiry_token is not null);
+  for update to anon using (inquiry_token is not null);
 
--- Public can read booking for signing (by id)
 create policy "public_read_booking_for_sign" on djkj.bookings
-  for select to anon
-  using (true);
+  for select to anon using (true);
 
 -- Updated_at trigger
 create or replace function djkj.update_updated_at()
@@ -88,6 +86,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists bookings_updated_at on djkj.bookings;
 create trigger bookings_updated_at
   before update on djkj.bookings
   for each row execute function djkj.update_updated_at();
