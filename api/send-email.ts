@@ -10,7 +10,8 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.VITE_APP_URL || '';
-const HUSBAND_EMAIL = 'dazzlindezigns@gmail.com';
+const HUSBAND_EMAIL = 'brandon.washingtonjr09@gmail.com';
+const HUSBAND_CC = 'brandon.washington62@gmail.com';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -85,6 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     payload = {
       from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: HUSBAND_EMAIL,
+      cc: HUSBAND_CC,
       subject: `New Booking Inquiry — ${client.name}`,
       html: `<div style="${wrapStyle}">
         <h1 style="font-size:24px;margin:0 0 4px;">New Booking Inquiry</h1>
@@ -140,7 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       <p style="${mutedStyle}">— DJ KJ Booking System</p>
     </div>`;
     // Send to both client and husband
-    await resend.emails.send({ from: 'DJ KJ Bookings <bookings@djkjatx.com>', to: HUSBAND_EMAIL, subject: `Signed Agreement — ${client.name} / ${eventDate}`, html: contractHtml, attachments });
+    await resend.emails.send({ from: 'DJ KJ Bookings <bookings@djkjatx.com>', to: HUSBAND_EMAIL, cc: HUSBAND_CC, subject: `Signed Agreement — ${client.name} / ${eventDate}`, html: contractHtml, attachments });
     payload = { from: 'DJ KJ Bookings <bookings@djkjatx.com>', to: client.email, subject: `Your Signed DJ KJ Agreement — ${eventDate}`, html: contractHtml, attachments };
   } else if (type === 'confirmed') {
     payload = {
