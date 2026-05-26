@@ -21,28 +21,28 @@ const STATUS_CONFIG: Record<
   },
   confirmed: {
     label: 'Confirmed',
-    color: '#eab308',
-    bg: 'rgba(234,179,8,0.15)',
+    color: '#60a5fa',
+    bg: 'rgba(96,165,250,0.15)',
   },
   agreement_sent: {
     label: 'Agreement Sent',
-    color: '#eab308',
-    bg: 'rgba(234,179,8,0.15)',
+    color: '#a78bfa',
+    bg: 'rgba(167,139,250,0.15)',
   },
   signed: {
     label: 'Signed',
-    color: '#f97316',
-    bg: 'rgba(249,115,22,0.15)',
+    color: '#c084fc',
+    bg: 'rgba(192,132,252,0.15)',
   },
   deposit_paid: {
     label: 'Deposit Paid',
-    color: '#22c55e',
-    bg: 'rgba(34,197,94,0.15)',
+    color: '#818cf8',
+    bg: 'rgba(129,140,248,0.15)',
   },
   completed: {
     label: 'Completed',
-    color: '#22c55e',
-    bg: 'rgba(34,197,94,0.15)',
+    color: '#3b82f6',
+    bg: 'rgba(59,130,246,0.15)',
   },
   cancelled: {
     label: 'Cancelled',

@@ -140,8 +140,8 @@ export default function Dashboard() {
         <div className="flex gap-3 mb-6 overflow-x-auto pb-1">
           <StatCard label="Total" value={totalCount} color="#ffffff" />
           <StatCard label="Awaiting" value={awaitingCount} color="#8b5cf6" />
-          <StatCard label="Pending Sig" value={signatureCount} color="#eab308" />
-          <StatCard label="Deposit Due" value={depositCount} color="#f97316" />
+          <StatCard label="Pending Sig" value={signatureCount} color="#60a5fa" />
+          <StatCard label="Deposit Due" value={depositCount} color="#a78bfa" />
         </div>
 
         {/* Filter tabs */}

@@ -83,7 +83,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
         <div className="flex items-center gap-3">
           {booking.total_price != null && (
             <div className="text-right">
-              <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>
+              <span className="text-xs font-semibold" style={{ color: '#818cf8' }}>
                 {formatCents(booking.total_price)}
               </span>
               {booking.deposit_amount != null && (
