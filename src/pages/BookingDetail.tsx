@@ -68,6 +68,7 @@ export default function BookingDetail() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [balanceReminderSent, setBalanceReminderSent] = useState(false);
 
   // Confirmation form state
   const [selectedPackage, setSelectedPackage] = useState('');
@@ -206,6 +207,21 @@ export default function BookingDetail() {
     await supabase.from('bookings').update({ internal_notes: internalNotes }).eq('id', booking.id);
     setSuccessMsg('Notes saved.');
     setSaving(false);
+  }
+
+  async function handleSendBalanceReminder() {
+    if (!booking) return;
+    setSaving(true);
+    setError('');
+    try {
+      await sendEmail('balance_reminder', booking.id);
+      setBalanceReminderSent(true);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to send balance reminder.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function copyInquiryLink() {
@@ -533,12 +549,26 @@ export default function BookingDetail() {
               >
                 {saving ? 'Saving...' : 'Mark Deposit Received'}
               </button>
+              {hasEventDate && (
+                <button
+                  onClick={handleSendBalanceReminder}
+                  disabled={saving || balanceReminderSent}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm mt-3"
+                  style={{
+                    background: 'transparent',
+                    border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
+                    color: balanceReminderSent ? '#818cf8' : '#a78bfa',
+                  }}
+                >
+                  {balanceReminderSent ? 'Reminder Sent ✓' : 'Send Balance Reminder'}
+                </button>
+              )}
             </Section>
           )}
 
           {booking.status === 'deposit_paid' && (
             <Section title="Deposit">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-3">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#818cf8' }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -548,6 +578,20 @@ export default function BookingDetail() {
                   Deposit Received — {formatCents(booking.deposit_amount)}
                 </span>
               </div>
+              {hasEventDate && (
+                <button
+                  onClick={handleSendBalanceReminder}
+                  disabled={saving || balanceReminderSent}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm"
+                  style={{
+                    background: 'transparent',
+                    border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
+                    color: balanceReminderSent ? '#818cf8' : '#a78bfa',
+                  }}
+                >
+                  {balanceReminderSent ? 'Reminder Sent ✓' : 'Send Balance Reminder'}
+                </button>
+              )}
             </Section>
           )}
 

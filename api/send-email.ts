@@ -164,6 +164,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <p style="${mutedStyle}">— DJ KJ</p>
       </div>`,
     };
+  } else if (type === 'balance_reminder') {
+    payload = {
+      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      to: client.email,
+      subject: 'Balance Due Reminder — Your DJ KJ Event is Coming Up!',
+      html: `<div style="${wrapStyle}">
+        <h1 style="font-size:28px;margin:0 0 4px;">DJ KJ</h1>
+        <p style="${mutedStyle}margin-top:0;">Balance Due Reminder</p>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:20px 0;">
+        <p>Hey <strong>${client.name}</strong>!</p>
+        <p>Just a reminder that your balance of <strong>$${balanceDollars}</strong> is due 24 hours before your event.</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+          <tr><td style="${labelStyle}padding:6px 0;">Event</td><td style="${valStyle}padding:6px 0;">${booking.event_type || 'Your Event'}</td></tr>
+          <tr><td style="${labelStyle}padding:6px 0;">Date</td><td style="${valStyle}padding:6px 0;">${eventDate}</td></tr>
+          <tr><td style="${labelStyle}padding:6px 0;">Balance Due</td><td style="${valStyle}padding:6px 0;">$${balanceDollars}</td></tr>
+        </table>
+        <p>Please send payment via CashApp to <strong>$Kjwasington37</strong> before ${eventDate}.</p>
+        <p style="${mutedStyle}">Questions? Reply to this email.</p>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:20px 0;">
+        <p style="${mutedStyle}">— DJ KJ Team</p>
+      </div>`,
+    };
   } else {
     return res.status(400).json({ error: 'Unknown email type' });
   }
