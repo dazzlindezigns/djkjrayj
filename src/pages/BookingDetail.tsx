@@ -1,0 +1,624 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import { supabase } from '../supabase';
+import type { Booking } from '../types';
+import StatusBadge from '../components/StatusBadge';
+import StepTimeline from '../components/StepTimeline';
+import { sendEmail } from '../lib/email';
+import { downloadICS } from '../lib/ics';
+
+const PACKAGES = [
+  { name: 'Starter Set', price: 15000 },
+  { name: 'The Vibe', price: 27500 },
+  { name: 'Full Send', price: 40000 },
+  { name: 'Custom', price: 0 },
+];
+
+function formatCents(cents?: number | null): string {
+  if (cents == null) return '—';
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return format(parseISO(dateStr), 'EEEE, MMMM d, yyyy');
+  } catch {
+    return dateStr;
+  }
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-2xl p-5"
+      style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}
+    >
+      <h2
+        className="text-sm font-bold uppercase tracking-widest mb-4"
+        style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Orbitron, sans-serif', fontSize: '10px' }}
+      >
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        {label}
+      </span>
+      <p className="font-semibold mt-0.5" style={{ color: value ? '#ffffff' : 'rgba(255,255,255,0.25)' }}>
+        {value || '—'}
+      </p>
+    </div>
+  );
+}
+
+export default function BookingDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Confirmation form state
+  const [selectedPackage, setSelectedPackage] = useState('');
+  const [totalPrice, setTotalPrice] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [hours, setHours] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [internalNotes, setInternalNotes] = useState('');
+
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+
+  const loadBooking = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    const { data, error: err } = await supabase
+      .from('bookings')
+      .select('*, clients(*)')
+      .eq('id', id)
+      .single();
+
+    if (err) {
+      setError('Booking not found.');
+      setLoading(false);
+      return;
+    }
+
+    const b = data as Booking;
+    setBooking(b);
+    setSelectedPackage(b.package_name ?? '');
+    setTotalPrice(b.total_price != null ? String(b.total_price / 100) : '');
+    setDepositAmount(b.deposit_amount != null ? String(b.deposit_amount / 100) : '');
+    setHours(b.hours != null ? String(b.hours) : '');
+    setStartTime(b.start_time ?? '');
+    setInternalNotes(b.internal_notes ?? '');
+    setLoading(false);
+  }, [id]);
+
+  useEffect(() => {
+    loadBooking();
+  }, [loadBooking]);
+
+  function handlePackageSelect(pkgName: string) {
+    setSelectedPackage(pkgName);
+    const pkg = PACKAGES.find((p) => p.name === pkgName);
+    if (pkg && pkg.price > 0) {
+      setTotalPrice(String(pkg.price / 100));
+      // Default deposit to 50%
+      setDepositAmount(String(pkg.price / 100 / 2));
+    }
+  }
+
+  async function handleConfirm() {
+    if (!booking) return;
+    if (!totalPrice || !depositAmount) {
+      setError('Please enter total price and deposit amount.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setSuccessMsg('');
+
+    const totalCents = Math.round(parseFloat(totalPrice) * 100);
+    const depositCents = Math.round(parseFloat(depositAmount) * 100);
+
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({
+        status: 'agreement_sent',
+        package_name: selectedPackage || null,
+        total_price: totalCents,
+        deposit_amount: depositCents,
+        hours: hours ? parseInt(hours) : null,
+        start_time: startTime || null,
+        internal_notes: internalNotes || null,
+      })
+      .eq('id', booking.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+
+    // Send agreement email
+    await sendEmail('agreement', booking.id);
+
+    setSuccessMsg('Booking confirmed and agreement sent to client!');
+    loadBooking();
+    setSaving(false);
+  }
+
+  async function handleMarkDepositPaid() {
+    if (!booking) return;
+    setSaving(true);
+    setError('');
+
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({ status: 'deposit_paid' })
+      .eq('id', booking.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+
+    setSuccessMsg('Deposit marked as received!');
+    loadBooking();
+    setSaving(false);
+  }
+
+  async function handleMarkCompleted() {
+    if (!booking) return;
+    setSaving(true);
+
+    await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id);
+    loadBooking();
+    setSaving(false);
+  }
+
+  async function handleCancel() {
+    if (!booking) return;
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    setSaving(true);
+
+    await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
+    loadBooking();
+    setSaving(false);
+  }
+
+  async function handleSaveNotes() {
+    if (!booking) return;
+    setSaving(true);
+    await supabase.from('bookings').update({ internal_notes: internalNotes }).eq('id', booking.id);
+    setSuccessMsg('Notes saved.');
+    setSaving(false);
+  }
+
+  async function copyInquiryLink() {
+    if (!booking) return;
+    const link = `${appUrl}/book/${booking.inquiry_token}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
+
+  async function copySigningLink() {
+    if (!booking) return;
+    const link = `${appUrl}/sign/${booking.id}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0f' }}>
+        <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(255,255,255,0.1)', borderTopColor: '#3b82f6' }} />
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: '#0a0a0f' }}>
+        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Booking not found.</p>
+        <button onClick={() => navigate('/dashboard')} className="px-4 py-2 rounded-xl text-sm font-semibold" style={{ background: '#3b82f6', color: '#fff' }}>
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const client = booking.clients;
+  const inquiryLink = `${appUrl}/book/${booking.inquiry_token}`;
+  const signingLink = `${appUrl}/sign/${booking.id}`;
+  const canConfirm = booking.status === 'inquiry_submitted';
+  const canMarkDeposit = booking.status === 'signed';
+  const canMarkComplete = booking.status === 'deposit_paid';
+  const hasEventDate = !!booking.event_date;
+
+  return (
+    <div className="min-h-screen" style={{ background: '#0a0a0f', fontFamily: 'Rajdhani, sans-serif' }}>
+      <div className="max-w-2xl mx-auto px-4 pb-10">
+        {/* Header */}
+        <div className="flex items-center gap-3 py-5">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 text-sm font-semibold rounded-xl px-3 py-2"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Dashboard
+          </button>
+          <div className="flex-1" />
+          <StatusBadge status={booking.status} />
+        </div>
+
+        {/* Success / Error messages */}
+        {successMsg && (
+          <div className="mb-4 rounded-xl p-3 text-sm font-semibold" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}>
+            {successMsg}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 rounded-xl p-3 text-sm font-semibold" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4">
+          {/* Client Info */}
+          <Section title="Client">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Field label="Name" value={client?.name} />
+              </div>
+              <Field label="Email" value={client?.email} />
+              <Field label="Phone" value={client?.phone} />
+              {client?.notes && (
+                <div className="col-span-2">
+                  <Field label="Notes" value={client.notes} />
+                </div>
+              )}
+            </div>
+          </Section>
+
+          {/* Event Details */}
+          <Section title="Event Details">
+            {booking.status === 'inquiry_sent' ? (
+              <div>
+                <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  Awaiting client response. Share this link with them:
+                </p>
+                <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{inquiryLink}</span>
+                  <button
+                    onClick={copyInquiryLink}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
+                    style={{ background: '#3b82f6', color: '#fff' }}
+                  >
+                    {copiedLink ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Field label="Event Date" value={formatDate(booking.event_date)} />
+                </div>
+                <Field label="Event Type" value={booking.event_type} />
+                <Field label="Guest Count" value={booking.guest_count?.toString()} />
+                <div className="col-span-2">
+                  <Field label="Venue" value={booking.venue} />
+                </div>
+                <Field label="Start Time" value={booking.start_time} />
+                <Field label="Duration" value={booking.hours ? `${booking.hours} hrs` : undefined} />
+              </div>
+            )}
+          </Section>
+
+          {/* Pricing & Confirmation — shown when inquiry_submitted */}
+          {canConfirm && (
+            <Section title="Pricing & Confirmation">
+              <div className="flex flex-col gap-4">
+                {/* Package selector */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    Package
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PACKAGES.map((pkg) => (
+                      <button
+                        key={pkg.name}
+                        type="button"
+                        onClick={() => handlePackageSelect(pkg.name)}
+                        className="py-3 px-3 rounded-xl text-sm font-semibold text-left transition-all"
+                        style={{
+                          background: selectedPackage === pkg.name ? 'rgba(59,130,246,0.15)' : '#1a1a26',
+                          border: selectedPackage === pkg.name ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.08)',
+                          color: selectedPackage === pkg.name ? '#3b82f6' : 'rgba(255,255,255,0.7)',
+                        }}
+                      >
+                        <div>{pkg.name}</div>
+                        {pkg.price > 0 && (
+                          <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                            ${(pkg.price / 100).toFixed(0)}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Total Price ($)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={totalPrice}
+                      onChange={(e) => setTotalPrice(e.target.value)}
+                      placeholder="e.g. 275.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Deposit ($)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      placeholder="e.g. 137.50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Hours
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={hours}
+                      onChange={(e) => setHours(e.target.value)}
+                      placeholder="e.g. 3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    Internal Notes
+                  </label>
+                  <textarea
+                    value={internalNotes}
+                    onChange={(e) => setInternalNotes(e.target.value)}
+                    placeholder="Any internal notes..."
+                    rows={2}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
+                <button
+                  onClick={handleConfirm}
+                  disabled={saving}
+                  className="w-full py-3.5 rounded-xl font-bold text-sm"
+                  style={{
+                    background: saving ? 'rgba(34,197,94,0.5)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    color: '#fff',
+                  }}
+                >
+                  {saving ? 'Sending...' : 'Confirm Booking & Send Agreement'}
+                </button>
+              </div>
+            </Section>
+          )}
+
+          {/* Pricing display (already confirmed) */}
+          {!canConfirm && booking.total_price != null && (
+            <Section title="Pricing">
+              <div className="grid grid-cols-3 gap-4">
+                {booking.package_name && (
+                  <div className="col-span-3">
+                    <Field label="Package" value={booking.package_name} />
+                  </div>
+                )}
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Total</span>
+                  <p className="font-bold text-xl mt-0.5" style={{ color: '#22c55e' }}>{formatCents(booking.total_price)}</p>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Deposit</span>
+                  <p className="font-bold text-xl mt-0.5" style={{ color: '#eab308' }}>{formatCents(booking.deposit_amount)}</p>
+                </div>
+                {booking.hours && (
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Hours</span>
+                    <p className="font-bold text-xl mt-0.5" style={{ color: '#ffffff' }}>{booking.hours}h</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {/* Agreement / Signing */}
+          {['agreement_sent', 'confirmed'].includes(booking.status) && (
+            <Section title="Agreement">
+              <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Agreement sent to client. Share this signing link if needed:
+              </p>
+              <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{signingLink}</span>
+                <button
+                  onClick={copySigningLink}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
+                  style={{ background: '#3b82f6', color: '#fff' }}
+                >
+                  {copiedLink ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </Section>
+          )}
+
+          {booking.status === 'signed' && (
+            <Section title="Agreement">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#22c55e' }}>
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-sm" style={{ color: '#22c55e' }}>Agreement Signed</span>
+              </div>
+              {booking.signed_at && (
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Signed on {format(parseISO(booking.signed_at), 'PPpp')}
+                </p>
+              )}
+              {booking.client_signature && (
+                <p className="text-sm mt-1 italic" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  Signed as: "{booking.client_signature}"
+                </p>
+              )}
+            </Section>
+          )}
+
+          {/* Deposit */}
+          {canMarkDeposit && (
+            <Section title="Deposit">
+              <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Agreement signed! Waiting for deposit payment of{' '}
+                <span style={{ color: '#eab308', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.
+              </p>
+              <button
+                onClick={handleMarkDepositPaid}
+                disabled={saving}
+                className="w-full py-3 rounded-xl font-bold text-sm"
+                style={{
+                  background: saving ? 'rgba(34,197,94,0.5)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  color: '#fff',
+                }}
+              >
+                {saving ? 'Saving...' : 'Mark Deposit Received'}
+              </button>
+            </Section>
+          )}
+
+          {booking.status === 'deposit_paid' && (
+            <Section title="Deposit">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#22c55e' }}>
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-sm" style={{ color: '#22c55e' }}>
+                  Deposit Received — {formatCents(booking.deposit_amount)}
+                </span>
+              </div>
+            </Section>
+          )}
+
+          {/* Add to Calendar */}
+          {hasEventDate && client && (
+            <button
+              onClick={() => downloadICS(booking, client)}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+              style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', color: '#3b82f6' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Add to Calendar (.ics)
+            </button>
+          )}
+
+          {/* Internal Notes (for non-confirm states) */}
+          {!canConfirm && (
+            <Section title="Internal Notes">
+              <textarea
+                value={internalNotes}
+                onChange={(e) => setInternalNotes(e.target.value)}
+                placeholder="Private notes (not visible to client)..."
+                rows={3}
+                style={{ resize: 'vertical' }}
+              />
+              <button
+                onClick={handleSaveNotes}
+                disabled={saving}
+                className="mt-3 px-4 py-2 rounded-lg text-sm font-semibold"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
+              >
+                Save Notes
+              </button>
+            </Section>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            {canMarkComplete && (
+              <button
+                onClick={handleMarkCompleted}
+                disabled={saving}
+                className="flex-1 py-3 rounded-xl font-bold text-sm"
+                style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#3b82f6' }}
+              >
+                Mark Completed
+              </button>
+            )}
+            {!['completed', 'cancelled'].includes(booking.status) && (
+              <button
+                onClick={handleCancel}
+                disabled={saving}
+                className="px-4 py-3 rounded-xl font-bold text-sm"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {/* Status Timeline */}
+          <Section title="Booking Progress">
+            <StepTimeline status={booking.status} />
+          </Section>
+        </div>
+      </div>
+    </div>
+  );
+}
