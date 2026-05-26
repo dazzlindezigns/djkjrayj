@@ -177,6 +177,11 @@ export default function BookingDetail() {
       return;
     }
 
+    // If already signed → send booking confirmed email
+    // If not yet signed → send deposit received + sign reminder email
+    const emailType = booking.status === 'signed' ? 'confirmed' : 'deposit_before_sign';
+    await sendEmail(emailType, booking.id);
+
     setSuccessMsg('Deposit marked as received!');
     loadBooking();
     setSaving(false);
@@ -263,7 +268,7 @@ export default function BookingDetail() {
   const inquiryLink = `${appUrl}/book/${booking.inquiry_token}`;
   const signingLink = `${appUrl}/sign/${booking.id}`;
   const canConfirm = booking.status === 'inquiry_submitted';
-  const canMarkDeposit = booking.status === 'signed';
+  const canMarkDeposit = !['deposit_paid', 'completed', 'cancelled'].includes(booking.status) && booking.deposit_amount != null;
   const canMarkComplete = booking.status === 'deposit_paid';
   const hasEventDate = !!booking.event_date;
 
@@ -535,8 +540,10 @@ export default function BookingDetail() {
           {canMarkDeposit && (
             <Section title="Deposit">
               <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Agreement signed! Waiting for deposit payment of{' '}
-                <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.
+                {booking.status === 'signed'
+                  ? <>Agreement signed! Waiting for deposit of <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.</>
+                  : <>Deposit of <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> received before agreement was signed — client will be reminded to sign.</>
+                }
               </p>
               <button
                 onClick={handleMarkDepositPaid}
