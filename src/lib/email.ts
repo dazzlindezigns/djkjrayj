@@ -1,37 +1,47 @@
-import { supabase } from '../supabase';
-
 export async function sendEmail(
   type: string,
   bookingId: string,
   attachmentBase64?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { data, error } = await supabase.functions.invoke('send-email', {
-    body: {
-      type,
-      booking_id: bookingId,
-      ...(attachmentBase64 ? { attachment_base64: attachmentBase64 } : {}),
-    },
-  });
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        booking_id: bookingId,
+        ...(attachmentBase64 ? { attachment_base64: attachmentBase64 } : {}),
+      }),
+    });
 
-  if (error) {
-    console.error('sendEmail error:', error);
-    return { success: false, error: error.message };
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { success: false, error: (data as { error?: string }).error || 'Email send failed' };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
-
-  return { success: true, ...data };
 }
 
 export async function generateContract(
   bookingId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { data, error } = await supabase.functions.invoke('generate-contract', {
-    body: { booking_id: bookingId },
-  });
+  try {
+    const res = await fetch('/api/generate-contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId }),
+    });
 
-  if (error) {
-    console.error('generateContract error:', error);
-    return { success: false, error: error.message };
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { success: false, error: (data as { error?: string }).error || 'Contract generation failed' };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
-
-  return { success: true, ...data };
 }
