@@ -188,6 +188,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <p style="${mutedStyle}">— DJ KJ Team</p>
       </div>`,
     };
+  } else if (type === 'survey') {
+    payload = {
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
+      to: client.email,
+      subject: 'How was your experience? Tell DJ KJ! ⭐',
+      html: `<div style="${wrapStyle}">
+        <h1 style="font-size:28px;margin:0 0 4px;">DJ KJ</h1>
+        <p style="${mutedStyle}margin-top:0;">Post-Event Survey</p>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:20px 0;">
+        <p>Hey <strong>${client.name}</strong>!</p>
+        <p>Thanks for choosing DJ KJ for your ${booking.event_type || 'event'}! We hope you had an amazing time.</p>
+        <p>We'd love to hear about your experience — it only takes 2 minutes and helps DJ KJ continue to grow.</p>
+        <a href="${APP_URL}/survey/${booking.id}" style="${btnStyle}">Share Your Feedback →</a>
+        <p>Thanks again — see you at the next one!</p>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:20px 0;">
+        <p style="${mutedStyle}">— DJ KJ Team</p>
+      </div>`,
+    };
   } else if (type === 'deposit_before_sign') {
     payload = {
       from: 'DJ KJ Bookings <bookings@djkjatx.com>',

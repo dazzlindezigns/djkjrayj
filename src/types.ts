@@ -50,3 +50,13 @@ export interface EmailLog {
   resend_id?: string;
   status: string;
 }
+
+export interface Survey {
+  id: string;
+  created_at: string;
+  booking_id: string;
+  app_rating?: number;
+  app_comments?: string;
+  dj_rating?: number;
+  dj_comments?: string;
+}

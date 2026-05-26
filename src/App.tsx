@@ -7,6 +7,7 @@ import BookingDetail from './pages/BookingDetail';
 import ClientForm from './pages/ClientForm';
 import Sign from './pages/Sign';
 import BookingLanding from './pages/BookingLanding';
+import Survey from './pages/Survey';
 import type { Session } from '@supabase/supabase-js';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,7 @@ export default function App() {
       />
       <Route path="/book/:token" element={<ClientForm />} />
       <Route path="/sign/:id" element={<Sign />} />
+      <Route path="/survey/:bookingId" element={<Survey />} />
     </Routes>
   );
 }

@@ -69,6 +69,7 @@ export default function BookingDetail() {
   const [successMsg, setSuccessMsg] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [balanceReminderSent, setBalanceReminderSent] = useState(false);
+  const [surveySent, setSurveySent] = useState(false);
 
   // Confirmation form state
   const [selectedPackage, setSelectedPackage] = useState('');
@@ -211,6 +212,14 @@ export default function BookingDetail() {
     setSaving(true);
     await supabase.from('bookings').update({ internal_notes: internalNotes }).eq('id', booking.id);
     setSuccessMsg('Notes saved.');
+    setSaving(false);
+  }
+
+  async function handleSendSurvey() {
+    if (!booking) return;
+    setSaving(true);
+    await sendEmail('survey', booking.id);
+    setSurveySent(true);
     setSaving(false);
   }
 
@@ -513,6 +522,28 @@ export default function BookingDetail() {
             </Section>
           )}
 
+          {booking.status === 'deposit_paid' && !booking.client_signature && (
+            <Section title="Agreement">
+              <div className="flex items-center gap-2 mb-3 rounded-xl p-3" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+                <span style={{ color: '#fbbf24', fontSize: 18 }}>⚠️</span>
+                <span className="text-sm font-semibold" style={{ color: '#fbbf24' }}>Agreement not yet signed</span>
+              </div>
+              <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Deposit received but the client hasn't signed the agreement yet. Share the signing link:
+              </p>
+              <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{signingLink}</span>
+                <button
+                  onClick={copySigningLink}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
+                  style={{ background: '#3b82f6', color: '#fff' }}
+                >
+                  {copiedLink ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </Section>
+          )}
+
           {booking.status === 'signed' && (
             <Section title="Agreement">
               <div className="flex items-center gap-2 mb-2">
@@ -664,9 +695,30 @@ export default function BookingDetail() {
             )}
           </div>
 
+          {/* Post-Event Survey */}
+          {booking.status === 'completed' && (
+            <Section title="Post-Event Survey">
+              <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Send the client a survey to rate their booking experience and DJ KJ's performance.
+              </p>
+              <button
+                onClick={handleSendSurvey}
+                disabled={saving || surveySent}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm"
+                style={{
+                  background: 'transparent',
+                  border: surveySent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
+                  color: surveySent ? '#818cf8' : '#a78bfa',
+                }}
+              >
+                {surveySent ? 'Survey Sent ✓' : 'Send Post-Event Survey'}
+              </button>
+            </Section>
+          )}
+
           {/* Status Timeline */}
           <Section title="Booking Progress">
-            <StepTimeline status={booking.status} />
+            <StepTimeline status={booking.status} isSigned={!!booking.client_signature} />
           </Section>
         </div>
       </div>
