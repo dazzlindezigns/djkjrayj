@@ -217,18 +217,12 @@ export default function ClientForm() {
       <div className="max-w-lg mx-auto px-4">
         {/* Header */}
         <div className="text-center py-8">
-          <h1
-            className="text-3xl font-black mb-1"
-            style={{
-              fontFamily: 'Orbitron, sans-serif',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            DJ KJ
-          </h1>
+          <img
+            src="/icons/icon-512.png"
+            alt="DJ KJ"
+            className="mx-auto mb-2"
+            style={{ width: '120px', height: '120px', objectFit: 'contain' }}
+          />
           <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>
             Pflugerville, TX
           </p>

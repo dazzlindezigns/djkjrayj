@@ -61,18 +61,12 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1
-            className="text-4xl font-black mb-1"
-            style={{
-              fontFamily: 'Orbitron, sans-serif',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            DJ KJ
-          </h1>
+          <img
+            src="/icons/icon-512.png"
+            alt="DJ KJ"
+            className="mx-auto mb-2"
+            style={{ width: '160px', height: '160px', objectFit: 'contain' }}
+          />
           <p
             className="text-sm font-semibold tracking-widest uppercase"
             style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Rajdhani, sans-serif' }}

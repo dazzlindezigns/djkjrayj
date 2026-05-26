@@ -96,22 +96,17 @@ export default function Dashboard() {
       <div className="max-w-2xl mx-auto px-4 pb-8">
         {/* Header */}
         <div className="flex items-center justify-between py-5">
-          <div>
-            <h1
-              className="text-2xl font-black"
-              style={{
-                fontFamily: 'Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              DJ KJ
-            </h1>
-            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              Booking Manager
-            </p>
+          <div className="flex items-center gap-3">
+            <img
+              src="/icons/icon-512.png"
+              alt="DJ KJ"
+              style={{ width: '52px', height: '52px', objectFit: 'contain' }}
+            />
+            <div>
+              <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                Booking Manager
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
