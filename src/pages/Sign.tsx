@@ -171,12 +171,12 @@ export default function Sign() {
           <div
             className="rounded-2xl p-6 text-center mb-6"
             style={{
-              background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(22,163,74,0.05))',
-              border: '1px solid rgba(34,197,94,0.3)',
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(99,102,241,0.05))',
+              border: '1px solid rgba(99,102,241,0.3)',
             }}
           >
             <div className="text-4xl mb-3">✍️</div>
-            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif', color: '#22c55e' }}>
+            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif', color: '#818cf8' }}>
               Agreement Signed!
             </h2>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
@@ -215,11 +215,11 @@ export default function Sign() {
               <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
               <div className="flex justify-between">
                 <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Price</span>
-                <span className="text-sm font-bold" style={{ color: '#22c55e' }}>{formatCents(booking?.total_price)}</span>
+                <span className="text-sm font-bold" style={{ color: '#818cf8' }}>{formatCents(booking?.total_price)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Deposit Due Now</span>
-                <span className="text-sm font-bold" style={{ color: '#eab308' }}>{formatCents(booking?.deposit_amount)}</span>
+                <span className="text-sm font-bold" style={{ color: '#a78bfa' }}>{formatCents(booking?.deposit_amount)}</span>
               </div>
             </div>
           </div>
@@ -327,11 +327,11 @@ export default function Sign() {
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
             <div className="flex justify-between">
               <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Price</span>
-              <span className="text-sm font-bold" style={{ color: '#22c55e' }}>{formatCents(booking?.total_price)}</span>
+              <span className="text-sm font-bold" style={{ color: '#818cf8' }}>{formatCents(booking?.total_price)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Deposit</span>
-              <span className="text-sm font-bold" style={{ color: '#eab308' }}>{formatCents(booking?.deposit_amount)}</span>
+              <span className="text-sm font-bold" style={{ color: '#a78bfa' }}>{formatCents(booking?.deposit_amount)}</span>
             </div>
             {booking?.package_name && (
               <div className="flex justify-between">

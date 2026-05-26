@@ -272,7 +272,7 @@ export default function BookingDetail() {
 
         {/* Success / Error messages */}
         {successMsg && (
-          <div className="mb-4 rounded-xl p-3 text-sm font-semibold" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}>
+          <div className="mb-4 rounded-xl p-3 text-sm font-semibold" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}>
             {successMsg}
           </div>
         )}
@@ -436,7 +436,7 @@ export default function BookingDetail() {
                   disabled={saving}
                   className="w-full py-3.5 rounded-xl font-bold text-sm"
                   style={{
-                    background: saving ? 'rgba(34,197,94,0.5)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                     color: '#fff',
                   }}
                 >
@@ -457,11 +457,11 @@ export default function BookingDetail() {
                 )}
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Total</span>
-                  <p className="font-bold text-xl mt-0.5" style={{ color: '#22c55e' }}>{formatCents(booking.total_price)}</p>
+                  <p className="font-bold text-xl mt-0.5" style={{ color: '#818cf8' }}>{formatCents(booking.total_price)}</p>
                 </div>
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Deposit</span>
-                  <p className="font-bold text-xl mt-0.5" style={{ color: '#eab308' }}>{formatCents(booking.deposit_amount)}</p>
+                  <p className="font-bold text-xl mt-0.5" style={{ color: '#a78bfa' }}>{formatCents(booking.deposit_amount)}</p>
                 </div>
                 {booking.hours && (
                   <div>
@@ -495,12 +495,12 @@ export default function BookingDetail() {
           {booking.status === 'signed' && (
             <Section title="Agreement">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#22c55e' }}>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#818cf8' }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span className="font-semibold text-sm" style={{ color: '#22c55e' }}>Agreement Signed</span>
+                <span className="font-semibold text-sm" style={{ color: '#818cf8' }}>Agreement Signed</span>
               </div>
               {booking.signed_at && (
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -520,14 +520,14 @@ export default function BookingDetail() {
             <Section title="Deposit">
               <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 Agreement signed! Waiting for deposit payment of{' '}
-                <span style={{ color: '#eab308', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.
+                <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.
               </p>
               <button
                 onClick={handleMarkDepositPaid}
                 disabled={saving}
                 className="w-full py-3 rounded-xl font-bold text-sm"
                 style={{
-                  background: saving ? 'rgba(34,197,94,0.5)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                   color: '#fff',
                 }}
               >
@@ -539,12 +539,12 @@ export default function BookingDetail() {
           {booking.status === 'deposit_paid' && (
             <Section title="Deposit">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#22c55e' }}>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#818cf8' }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span className="font-semibold text-sm" style={{ color: '#22c55e' }}>
+                <span className="font-semibold text-sm" style={{ color: '#818cf8' }}>
                   Deposit Received — {formatCents(booking.deposit_amount)}
                 </span>
               </div>

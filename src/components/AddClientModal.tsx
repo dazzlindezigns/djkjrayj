@@ -115,10 +115,10 @@ export default function AddClientModal({ onClose, onSuccess }: AddClientModalPro
           <div className="p-5 flex flex-col gap-4">
             <div
               className="rounded-xl p-4 text-center"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}
+              style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)' }}
             >
               <div className="text-3xl mb-2">✓</div>
-              <p className="font-semibold text-sm" style={{ color: '#22c55e' }}>
+              <p className="font-semibold text-sm" style={{ color: '#818cf8' }}>
                 Client added &amp; inquiry sent!
               </p>
             </div>
