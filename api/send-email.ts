@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (type === 'inquiry_invite') {
     payload = {
-      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: client.email,
       subject: 'Complete Your Booking with DJ KJ 🎧',
       html: `<div style="${wrapStyle}">
@@ -83,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
   } else if (type === 'inquiry_notify') {
     payload = {
-      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: HUSBAND_EMAIL,
       subject: `New Booking Inquiry — ${client.name}`,
       html: `<div style="${wrapStyle}">
@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
   } else if (type === 'agreement') {
     payload = {
-      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: client.email,
       subject: 'Your DJ KJ Booking Agreement is Ready to Sign',
       html: `<div style="${wrapStyle}">
@@ -140,11 +140,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       <p style="${mutedStyle}">— DJ KJ Booking System</p>
     </div>`;
     // Send to both client and husband
-    await resend.emails.send({ from: 'DJ KJ Bookings <onboarding@resend.dev>', to: HUSBAND_EMAIL, subject: `Signed Agreement — ${client.name} / ${eventDate}`, html: contractHtml, attachments });
-    payload = { from: 'DJ KJ Bookings <onboarding@resend.dev>', to: client.email, subject: `Your Signed DJ KJ Agreement — ${eventDate}`, html: contractHtml, attachments };
+    await resend.emails.send({ from: 'DJ KJ Bookings <bookings@djkjatx.com>', to: HUSBAND_EMAIL, subject: `Signed Agreement — ${client.name} / ${eventDate}`, html: contractHtml, attachments });
+    payload = { from: 'DJ KJ Bookings <bookings@djkjatx.com>', to: client.email, subject: `Your Signed DJ KJ Agreement — ${eventDate}`, html: contractHtml, attachments };
   } else if (type === 'confirmed') {
     payload = {
-      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: client.email,
       subject: "You're Booked! 🎉 DJ KJ Confirmation",
       html: `<div style="${wrapStyle}">
@@ -166,7 +166,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
   } else if (type === 'balance_reminder') {
     payload = {
-      from: 'DJ KJ Bookings <onboarding@resend.dev>',
+      from: 'DJ KJ Bookings <bookings@djkjatx.com>',
       to: client.email,
       subject: 'Balance Due Reminder — Your DJ KJ Event is Coming Up!',
       html: `<div style="${wrapStyle}">
