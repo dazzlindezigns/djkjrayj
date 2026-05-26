@@ -1,0 +1,50 @@
+name: Supabase Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: kpgvrntpigvtgyrzmfba
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run database migration
+        run: |
+          jq -n --rawfile sql supabase/migrations/001_initial.sql '{"query": $sql}' | \
+          curl -sf -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @- | jq .
+
+      - name: Set edge function secrets
+        run: |
+          supabase secrets set \
+            SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+            HUSBAND_EMAIL="dazzlindezigns@gmail.com" \
+            VITE_APP_URL="https://djkjrayj.vercel.app" \
+            --project-ref $PROJECT_REF
+
+      - name: Deploy send-email function
+        run: |
+          supabase functions deploy send-email \
+            --no-verify-jwt \
+            --project-ref $PROJECT_REF
+
+      - name: Deploy generate-contract function
+        run: |
+          supabase functions deploy generate-contract \
+            --no-verify-jwt \
+            --project-ref $PROJECT_REF
+
+      - name: Done
+        run: echo "✅ Supabase setup complete — DB migrated, secrets set, functions deployed."
