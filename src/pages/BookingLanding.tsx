@@ -1,4 +1,71 @@
-import { useState, useRef, FormEvent } from 'react';
+import { useState, useRef, FormEvent, useEffect } from 'react';
+
+interface PackageInfo {
+  name: string;
+  price: string;
+  description: string;
+  tagline: string;
+  popular: boolean;
+  inclusions: string[];
+  formValue: string;
+}
+
+const PACKAGE_DATA: PackageInfo[] = [
+  {
+    name: 'Starter Set',
+    price: '$150',
+    description: '2 hours',
+    tagline: 'Perfect for small gatherings',
+    popular: false,
+    formValue: 'Starter Set ($150)',
+    inclusions: [
+      '2 hours of live DJ performance',
+      'Professional speakers & subwoofer',
+      'Music customization — you pick the vibe',
+      'Wireless mic for announcements',
+      'Basic LED lighting',
+      'Live song request handling',
+      'Setup & teardown included',
+    ],
+  },
+  {
+    name: 'The Vibe',
+    price: '$275',
+    description: '3 hours',
+    tagline: 'Great for parties',
+    popular: true,
+    formValue: 'The Vibe ($275)',
+    inclusions: [
+      '3 hours of live DJ performance',
+      'Professional speakers & powered subwoofer',
+      'Full music customization with playlist coordination',
+      'Wireless mic for announcements & hype',
+      'Enhanced LED lighting package',
+      'Live song requests & crowd reading',
+      'Venue walkthrough before event',
+      'Setup & teardown included',
+    ],
+  },
+  {
+    name: 'Full Send',
+    price: '$400',
+    description: '4+ hours',
+    tagline: 'Full event coverage',
+    popular: false,
+    formValue: 'Full Send ($400)',
+    inclusions: [
+      '4+ hours of live DJ performance',
+      'Premium dual speakers & powered subwoofer',
+      'Full event music direction — start to finish',
+      'Wireless mic for announcements, toasts & hype',
+      'Full LED + moving light show',
+      'Live song requests & crowd reading',
+      'Coordination with your event timeline',
+      'Priority booking & dedicated planning call',
+      'Setup & teardown included',
+    ],
+  },
+];
 
 const EVENT_TYPES = [
   'Birthday Party',
@@ -54,9 +121,25 @@ export default function BookingLanding() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
+
+  useEffect(() => {
+    if (selectedPackage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedPackage]);
 
   function scrollToForm() {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function bookPackage(pkg: PackageInfo) {
+    setSelectedPackage(null);
+    setForm((prev) => ({ ...prev, package_preference: pkg.formValue }));
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -289,27 +372,17 @@ export default function BookingLanding() {
             gap: '1.5rem',
           }}
         >
-          <PackageCard
-            name="Starter Set"
-            price="$150"
-            description="2 hours"
-            tagline="Perfect for small gatherings"
-            popular={false}
-          />
-          <PackageCard
-            name="The Vibe"
-            price="$275"
-            description="3 hours"
-            tagline="Great for parties"
-            popular={true}
-          />
-          <PackageCard
-            name="Full Send"
-            price="$400"
-            description="4+ hours"
-            tagline="Full event coverage"
-            popular={false}
-          />
+          {PACKAGE_DATA.map((pkg) => (
+            <PackageCard
+              key={pkg.name}
+              name={pkg.name}
+              price={pkg.price}
+              description={pkg.description}
+              tagline={pkg.tagline}
+              popular={pkg.popular}
+              onClick={() => setSelectedPackage(pkg)}
+            />
+          ))}
         </div>
       </section>
 
@@ -575,11 +648,177 @@ export default function BookingLanding() {
         </p>
       </footer>
 
+      {/* Package Detail Modal */}
+      {selectedPackage && (
+        <div
+          onClick={() => setSelectedPackage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#12121a',
+              border: '1px solid rgba(139,92,246,0.35)',
+              borderRadius: 20,
+              padding: 'clamp(1.5rem, 5vw, 2.5rem)',
+              maxWidth: 480,
+              width: '100%',
+              boxShadow: '0 0 0 1px rgba(139,92,246,0.2), 0 24px 64px rgba(0,0,0,0.6)',
+              position: 'relative',
+              animation: 'modalIn 0.18s ease',
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedPackage(null)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(255,255,255,0.07)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                cursor: 'pointer',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '1.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
+
+            {selectedPackage.popular && (
+              <div
+                style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  color: '#fff',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  fontFamily: 'Rajdhani, sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  padding: '4px 14px',
+                  borderRadius: 99,
+                  marginBottom: '1rem',
+                }}
+              >
+                Most Popular
+              </div>
+            )}
+
+            <h3
+              style={{
+                fontFamily: 'Orbitron, sans-serif',
+                fontWeight: 700,
+                fontSize: '1.4rem',
+                color: '#fff',
+                margin: '0 0 0.25rem',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {selectedPackage.name}
+            </h3>
+
+            <div
+              style={{
+                fontSize: '2.4rem',
+                fontFamily: 'Orbitron, sans-serif',
+                fontWeight: 900,
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: 1,
+                marginBottom: '0.25rem',
+              }}
+            >
+              {selectedPackage.price}
+            </div>
+
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', margin: '0 0 1.5rem' }}>
+              {selectedPackage.description} · {selectedPackage.tagline}
+            </p>
+
+            <div
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                paddingTop: '1.25rem',
+                marginBottom: '1.75rem',
+              }}
+            >
+              <p
+                style={{
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                What's Included
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {selectedPackage.inclusions.map((item) => (
+                  <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: 'rgba(255,255,255,0.85)', fontSize: '0.97rem' }}>
+                    <span style={{ color: '#818cf8', flexShrink: 0, marginTop: '2px' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2.5 7L5.5 10L11.5 4" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <button
+              onClick={() => bookPackage(selectedPackage)}
+              style={{
+                width: '100%',
+                padding: '0.9rem',
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: '1.05rem',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontWeight: 700,
+                cursor: 'pointer',
+                letterSpacing: '0.04em',
+                boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
+              }}
+            >
+              Book This Package →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Bounce keyframe via style tag */}
       <style>{`
         @keyframes bounce {
           0%, 100% { transform: translateX(-50%) translateY(0); }
           50% { transform: translateX(-50%) translateY(8px); }
+        }
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.95) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
     </div>
@@ -594,17 +833,20 @@ function PackageCard({
   description,
   tagline,
   popular,
+  onClick,
 }: {
   name: string;
   price: string;
   description: string;
   tagline: string;
   popular: boolean;
+  onClick: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
+      onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -626,6 +868,7 @@ function PackageCard({
           : 'none',
         backgroundOrigin: 'border-box',
         backgroundClip: hovered ? 'padding-box, border-box' : 'unset',
+        cursor: 'pointer',
       }}
     >
       {popular && (
@@ -694,11 +937,24 @@ function PackageCard({
         style={{
           color: 'rgba(255,255,255,0.45)',
           fontSize: '0.9rem',
-          margin: 0,
+          margin: '0 0 1.25rem',
         }}
       >
         {tagline}
       </p>
+
+      <div
+        style={{
+          fontSize: '0.82rem',
+          fontWeight: 600,
+          color: hovered ? '#818cf8' : 'rgba(255,255,255,0.25)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          transition: 'color 0.2s ease',
+        }}
+      >
+        View Details →
+      </div>
     </div>
   );
 }

@@ -75,6 +75,8 @@ export default function BookingDetail() {
   const [selectedPackage, setSelectedPackage] = useState('');
   const [totalPrice, setTotalPrice] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
+  const [discountInput, setDiscountInput] = useState('');
+  const [discountMode, setDiscountMode] = useState<'$' | '%'>('$');
   const [hours, setHours] = useState('');
   const [startTime, setStartTime] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
@@ -104,12 +106,20 @@ export default function BookingDetail() {
     setHours(b.hours != null ? String(b.hours) : '');
     setStartTime(b.start_time ?? '');
     setInternalNotes(b.internal_notes ?? '');
+    setDiscountInput(b.discount_amount_off ? String(b.discount_amount_off / 100) : '');
     setLoading(false);
   }, [id]);
 
   useEffect(() => {
     loadBooking();
   }, [loadBooking]);
+
+  function computeDiscountCents(input: string, mode: '$' | '%', totalCents: number): number {
+    if (!input || isNaN(parseFloat(input))) return 0;
+    const val = parseFloat(input);
+    if (mode === '%') return Math.round((val / 100) * totalCents);
+    return Math.round(val * 100);
+  }
 
   function handlePackageSelect(pkgName: string) {
     setSelectedPackage(pkgName);
@@ -134,6 +144,7 @@ export default function BookingDetail() {
 
     const totalCents = Math.round(parseFloat(totalPrice) * 100);
     const depositCents = Math.round(parseFloat(depositAmount) * 100);
+    const discountCents = computeDiscountCents(discountInput, discountMode, totalCents);
 
     const { error: updateError } = await supabase
       .from('bookings')
@@ -142,6 +153,7 @@ export default function BookingDetail() {
         package_name: selectedPackage || null,
         total_price: totalCents,
         deposit_amount: depositCents,
+        discount_amount_off: discountCents,
         hours: hours ? parseInt(hours) : null,
         start_time: startTime || null,
         internal_notes: internalNotes || null,
@@ -203,6 +215,20 @@ export default function BookingDetail() {
     setSaving(true);
 
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
+    loadBooking();
+    setSaving(false);
+  }
+
+  async function handleSaveDiscount() {
+    if (!booking) return;
+    setSaving(true);
+    setError('');
+    const discountCents = computeDiscountCents(discountInput, discountMode, booking.total_price ?? 0);
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({ discount_amount_off: discountCents })
+      .eq('id', booking.id);
+    if (updateError) { setError(updateError.message); } else { setSuccessMsg('Discount saved!'); }
     loadBooking();
     setSaving(false);
   }
@@ -446,6 +472,30 @@ export default function BookingDetail() {
                       onChange={(e) => setStartTime(e.target.value)}
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Discount (optional)
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountMode(discountMode === '$' ? '%' : '$')}
+                        className="flex-shrink-0 px-3 rounded-lg text-sm font-bold"
+                        style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#a78bfa', height: '100%' }}
+                      >
+                        {discountMode}
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={discountInput}
+                        onChange={(e) => setDiscountInput(e.target.value)}
+                        placeholder={discountMode === '$' ? 'e.g. 25.00' : 'e.g. 10'}
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -479,7 +529,7 @@ export default function BookingDetail() {
           {/* Pricing display (already confirmed) */}
           {!canConfirm && booking.total_price != null && (
             <Section title="Pricing">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 {booking.package_name && (
                   <div className="col-span-3">
                     <Field label="Package" value={booking.package_name} />
@@ -499,6 +549,54 @@ export default function BookingDetail() {
                     <p className="font-bold text-xl mt-0.5" style={{ color: '#ffffff' }}>{booking.hours}h</p>
                   </div>
                 )}
+                {(booking.discount_amount_off ?? 0) > 0 && (
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Discount</span>
+                    <p className="font-bold text-xl mt-0.5" style={{ color: '#34d399' }}>-{formatCents(booking.discount_amount_off)}</p>
+                  </div>
+                )}
+                {(booking.discount_amount_off ?? 0) > 0 && booking.deposit_amount != null && (
+                  <div className="col-span-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Balance Due</span>
+                    <p className="font-bold text-xl mt-0.5" style={{ color: '#60a5fa' }}>
+                      {formatCents(booking.total_price - (booking.deposit_amount ?? 0) - (booking.discount_amount_off ?? 0))}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Discount editor */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  {(booking.discount_amount_off ?? 0) > 0 ? 'Edit Discount' : 'Add Discount'}
+                </label>
+                <div className="flex gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountMode(discountMode === '$' ? '%' : '$')}
+                    className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-bold"
+                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#a78bfa' }}
+                  >
+                    {discountMode}
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value)}
+                    placeholder={discountMode === '$' ? 'Amount off (e.g. 25)' : 'Percent off (e.g. 10)'}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    onClick={handleSaveDiscount}
+                    disabled={saving}
+                    className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)', color: '#60a5fa' }}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </Section>
           )}
