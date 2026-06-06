@@ -37,6 +37,7 @@ export interface Booking {
   contract_pdf_path?: string;
   internal_notes?: string;
   discount_amount_off?: number;
+  custom_terms?: string;
   inquiry_token: string;
   // joined
   clients?: Client;

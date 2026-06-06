@@ -15,6 +15,11 @@ const PACKAGES = [
   { name: 'Custom', price: 0 },
 ];
 
+const EVENT_TYPES = [
+  'Birthday Party', 'Quinceañera', 'Sweet 16', 'Wedding', 'School Dance',
+  'Graduation Party', 'Corporate Event', 'Block Party', 'House Party', 'Other',
+];
+
 function formatCents(cents?: number | null): string {
   if (cents == null) return '—';
   return `$${(cents / 100).toFixed(2)}`;
@@ -22,25 +27,26 @@ function formatCents(cents?: number | null): string {
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return '—';
-  try {
-    return format(parseISO(dateStr), 'EEEE, MMMM d, yyyy');
-  } catch {
-    return dateStr;
-  }
+  try { return format(parseISO(dateStr), 'EEEE, MMMM d, yyyy'); }
+  catch { return dateStr; }
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title, children, action,
+}: {
+  title: string; children: React.ReactNode; action?: React.ReactNode;
+}) {
   return (
-    <div
-      className="rounded-2xl p-5"
-      style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
-      <h2
-        className="text-sm font-bold uppercase tracking-widest mb-4"
-        style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Orbitron, sans-serif', fontSize: '10px' }}
-      >
-        {title}
-      </h2>
+    <div className="rounded-2xl p-5" style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2
+          className="font-bold uppercase tracking-widest"
+          style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Orbitron, sans-serif', fontSize: '10px' }}
+        >
+          {title}
+        </h2>
+        {action}
+      </div>
       {children}
     </div>
   );
@@ -59,6 +65,50 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+function EditBtn({ onClick, active }: { onClick: () => void; active: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-2.5 py-1 rounded-lg text-xs font-semibold"
+      style={{
+        background: active ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)',
+        border: active ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.08)',
+        color: active ? '#60a5fa' : 'rgba(255,255,255,0.45)',
+      }}
+    >
+      {active ? 'Cancel' : 'Edit'}
+    </button>
+  );
+}
+
+function LabeledInput({
+  label, type = 'text', value, onChange, placeholder, min, max, step, children,
+}: {
+  label: string; type?: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; min?: string; max?: string; step?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        {label}
+      </label>
+      {children ?? (
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
+          style={type === 'date' || type === 'time' ? { colorScheme: 'dark' } : undefined}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function BookingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -71,7 +121,23 @@ export default function BookingDetail() {
   const [balanceReminderSent, setBalanceReminderSent] = useState(false);
   const [surveySent, setSurveySent] = useState(false);
 
-  // Confirmation form state
+  // Edit toggles
+  const [editingClient, setEditingClient] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(false);
+  const [editingPricing, setEditingPricing] = useState(false);
+
+  // Client edit fields
+  const [clientName, setClientName] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+
+  // Event edit fields
+  const [eventDate, setEventDate] = useState('');
+  const [eventType, setEventType] = useState('');
+  const [eventVenue, setEventVenue] = useState('');
+  const [guestCount, setGuestCount] = useState('');
+
+  // Pricing form state (used for both initial confirm and edit)
   const [selectedPackage, setSelectedPackage] = useState('');
   const [totalPrice, setTotalPrice] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
@@ -80,6 +146,7 @@ export default function BookingDetail() {
   const [hours, setHours] = useState('');
   const [startTime, setStartTime] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
+  const [customTerms, setCustomTerms] = useState('');
 
   const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
 
@@ -92,33 +159,43 @@ export default function BookingDetail() {
       .eq('id', id)
       .single();
 
-    if (err) {
-      setError('Booking not found.');
-      setLoading(false);
-      return;
-    }
+    if (err) { setError('Booking not found.'); setLoading(false); return; }
 
     const b = data as Booking;
     setBooking(b);
+
+    // Pricing
     setSelectedPackage(b.package_name ?? '');
     setTotalPrice(b.total_price != null ? String(b.total_price / 100) : '');
     setDepositAmount(b.deposit_amount != null ? String(b.deposit_amount / 100) : '');
+    setDiscountInput(b.discount_amount_off ? String(b.discount_amount_off / 100) : '');
     setHours(b.hours != null ? String(b.hours) : '');
     setStartTime(b.start_time ?? '');
+
+    // Client
+    setClientName(b.clients?.name ?? '');
+    setClientEmail(b.clients?.email ?? '');
+    setClientPhone(b.clients?.phone ?? '');
+
+    // Event
+    setEventDate(b.event_date ?? '');
+    setEventType(b.event_type ?? '');
+    setEventVenue(b.venue ?? '');
+    setGuestCount(b.guest_count != null ? String(b.guest_count) : '');
+
+    // Notes & terms
     setInternalNotes(b.internal_notes ?? '');
-    setDiscountInput(b.discount_amount_off ? String(b.discount_amount_off / 100) : '');
+    setCustomTerms(b.custom_terms ?? '');
+
     setLoading(false);
   }, [id]);
 
-  useEffect(() => {
-    loadBooking();
-  }, [loadBooking]);
+  useEffect(() => { loadBooking(); }, [loadBooking]);
 
   function computeDiscountCents(input: string, mode: '$' | '%', totalCents: number): number {
     if (!input || isNaN(parseFloat(input))) return 0;
     const val = parseFloat(input);
-    if (mode === '%') return Math.round((val / 100) * totalCents);
-    return Math.round(val * 100);
+    return mode === '%' ? Math.round((val / 100) * totalCents) : Math.round(val * 100);
   }
 
   function handlePackageSelect(pkgName: string) {
@@ -126,26 +203,62 @@ export default function BookingDetail() {
     const pkg = PACKAGES.find((p) => p.name === pkgName);
     if (pkg && pkg.price > 0) {
       setTotalPrice(String(pkg.price / 100));
-      // Default deposit to 50%
       setDepositAmount(String(pkg.price / 100 / 2));
     }
   }
 
-  async function handleConfirm() {
-    if (!booking) return;
-    if (!totalPrice || !depositAmount) {
-      setError('Please enter total price and deposit amount.');
-      return;
-    }
+  function showSuccess(msg: string) {
+    setError('');
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 4000);
+  }
 
+  // ── Client ──
+  async function handleSaveClient() {
+    if (!booking?.clients) return;
     setSaving(true);
     setError('');
-    setSuccessMsg('');
+    const { error: err } = await supabase
+      .from('clients')
+      .update({ name: clientName.trim(), email: clientEmail.trim(), phone: clientPhone.trim() })
+      .eq('id', booking.clients.id);
+    if (err) { setError(err.message); setSaving(false); return; }
+    setEditingClient(false);
+    showSuccess('Client info updated.');
+    loadBooking();
+    setSaving(false);
+  }
 
+  // ── Event Details ──
+  async function handleSaveEvent() {
+    if (!booking) return;
+    setSaving(true);
+    setError('');
+    const { error: err } = await supabase
+      .from('bookings')
+      .update({
+        event_date: eventDate || null,
+        event_type: eventType || null,
+        venue: eventVenue || null,
+        guest_count: guestCount ? parseInt(guestCount) : null,
+      })
+      .eq('id', booking.id);
+    if (err) { setError(err.message); setSaving(false); return; }
+    setEditingEvent(false);
+    showSuccess('Event details updated.');
+    loadBooking();
+    setSaving(false);
+  }
+
+  // ── Pricing (initial confirm) ──
+  async function handleConfirm() {
+    if (!booking) return;
+    if (!totalPrice || !depositAmount) { setError('Please enter total price and deposit amount.'); return; }
+    setSaving(true);
+    setError('');
     const totalCents = Math.round(parseFloat(totalPrice) * 100);
     const depositCents = Math.round(parseFloat(depositAmount) * 100);
     const discountCents = computeDiscountCents(discountInput, discountMode, totalCents);
-
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
@@ -159,43 +272,69 @@ export default function BookingDetail() {
         internal_notes: internalNotes || null,
       })
       .eq('id', booking.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setSaving(false);
-      return;
-    }
-
-    // Send agreement email
+    if (updateError) { setError(updateError.message); setSaving(false); return; }
     await sendEmail('agreement', booking.id);
-
-    setSuccessMsg('Booking confirmed and agreement sent to client!');
+    showSuccess('Booking confirmed and agreement sent to client!');
     loadBooking();
     setSaving(false);
   }
 
+  // ── Pricing (edit after confirmed) ──
+  async function handleSavePricing(resend = false) {
+    if (!booking) return;
+    if (!totalPrice || !depositAmount) { setError('Price and deposit are required.'); return; }
+    setSaving(true);
+    setError('');
+    const totalCents = Math.round(parseFloat(totalPrice) * 100);
+    const depositCents = Math.round(parseFloat(depositAmount) * 100);
+    const discountCents = computeDiscountCents(discountInput, discountMode, totalCents);
+    const { error: err } = await supabase
+      .from('bookings')
+      .update({
+        package_name: selectedPackage || null,
+        total_price: totalCents,
+        deposit_amount: depositCents,
+        discount_amount_off: discountCents,
+        hours: hours ? parseInt(hours) : null,
+        start_time: startTime || null,
+      })
+      .eq('id', booking.id);
+    if (err) { setError(err.message); setSaving(false); return; }
+    if (resend) {
+      await sendEmail('agreement', booking.id);
+      showSuccess('Pricing updated and agreement resent!');
+    } else {
+      showSuccess('Pricing updated.');
+    }
+    setEditingPricing(false);
+    loadBooking();
+    setSaving(false);
+  }
+
+  // ── Custom Terms ──
+  async function handleSaveCustomTerms() {
+    if (!booking) return;
+    setSaving(true);
+    setError('');
+    const { error: err } = await supabase
+      .from('bookings')
+      .update({ custom_terms: customTerms.trim() || null })
+      .eq('id', booking.id);
+    if (err) { setError(err.message); } else { showSuccess('Custom terms saved.'); }
+    setSaving(false);
+  }
+
+  // ── Deposit ──
   async function handleMarkDepositPaid() {
     if (!booking) return;
     setSaving(true);
     setError('');
-
     const { error: updateError } = await supabase
-      .from('bookings')
-      .update({ status: 'deposit_paid' })
-      .eq('id', booking.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setSaving(false);
-      return;
-    }
-
-    // If already signed → send booking confirmed email
-    // If not yet signed → send deposit received + sign reminder email
+      .from('bookings').update({ status: 'deposit_paid' }).eq('id', booking.id);
+    if (updateError) { setError(updateError.message); setSaving(false); return; }
     const emailType = booking.status === 'signed' ? 'confirmed' : 'deposit_before_sign';
     await sendEmail(emailType, booking.id);
-
-    setSuccessMsg('Deposit marked as received!');
+    showSuccess('Deposit marked as received!');
     loadBooking();
     setSaving(false);
   }
@@ -203,7 +342,6 @@ export default function BookingDetail() {
   async function handleMarkCompleted() {
     if (!booking) return;
     setSaving(true);
-
     await supabase.from('bookings').update({ status: 'completed' }).eq('id', booking.id);
     loadBooking();
     setSaving(false);
@@ -213,22 +351,7 @@ export default function BookingDetail() {
     if (!booking) return;
     if (!confirm('Are you sure you want to cancel this booking?')) return;
     setSaving(true);
-
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
-    loadBooking();
-    setSaving(false);
-  }
-
-  async function handleSaveDiscount() {
-    if (!booking) return;
-    setSaving(true);
-    setError('');
-    const discountCents = computeDiscountCents(discountInput, discountMode, booking.total_price ?? 0);
-    const { error: updateError } = await supabase
-      .from('bookings')
-      .update({ discount_amount_off: discountCents })
-      .eq('id', booking.id);
-    if (updateError) { setError(updateError.message); } else { setSuccessMsg('Discount saved!'); }
     loadBooking();
     setSaving(false);
   }
@@ -237,7 +360,15 @@ export default function BookingDetail() {
     if (!booking) return;
     setSaving(true);
     await supabase.from('bookings').update({ internal_notes: internalNotes }).eq('id', booking.id);
-    setSuccessMsg('Notes saved.');
+    showSuccess('Notes saved.');
+    setSaving(false);
+  }
+
+  async function handleResendAgreement() {
+    if (!booking) return;
+    setSaving(true);
+    await sendEmail('agreement', booking.id);
+    showSuccess('Agreement resent to client!');
     setSaving(false);
   }
 
@@ -266,16 +397,14 @@ export default function BookingDetail() {
 
   async function copyInquiryLink() {
     if (!booking) return;
-    const link = `${appUrl}/book/${booking.inquiry_token}`;
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(`${appUrl}/book/${booking.inquiry_token}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   }
 
   async function copySigningLink() {
     if (!booking) return;
-    const link = `${appUrl}/sign/${booking.id}`;
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(`${appUrl}/sign/${booking.id}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   }
@@ -306,10 +435,19 @@ export default function BookingDetail() {
   const canMarkDeposit = !['deposit_paid', 'completed', 'cancelled'].includes(booking.status) && booking.deposit_amount != null;
   const canMarkComplete = booking.status === 'deposit_paid';
   const hasEventDate = !!booking.event_date;
+  const canResendAgreement = ['agreement_sent', 'confirmed', 'signed'].includes(booking.status);
+  const canEditPricing = !['cancelled'].includes(booking.status) && !canConfirm && booking.total_price != null;
+
+  // Computed balance
+  const totalCents = booking.total_price ?? 0;
+  const depositCents = booking.deposit_amount ?? 0;
+  const discountCents = booking.discount_amount_off ?? 0;
+  const balanceDueCents = totalCents - depositCents - discountCents;
 
   return (
     <div className="min-h-screen" style={{ background: '#0a0a0f', fontFamily: 'Rajdhani, sans-serif' }}>
       <div className="max-w-2xl mx-auto px-4 pb-10">
+
         {/* Header */}
         <div className="flex items-center gap-3 py-5">
           <button
@@ -326,7 +464,7 @@ export default function BookingDetail() {
           <StatusBadge status={booking.status} />
         </div>
 
-        {/* Success / Error messages */}
+        {/* Messages */}
         {successMsg && (
           <div className="mb-4 rounded-xl p-3 text-sm font-semibold" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}>
             {successMsg}
@@ -339,24 +477,40 @@ export default function BookingDetail() {
         )}
 
         <div className="flex flex-col gap-4">
-          {/* Client Info */}
-          <Section title="Client">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Field label="Name" value={client?.name} />
-              </div>
-              <Field label="Email" value={client?.email} />
-              <Field label="Phone" value={client?.phone} />
-              {client?.notes && (
-                <div className="col-span-2">
-                  <Field label="Notes" value={client.notes} />
+
+          {/* ── Client ── */}
+          <Section title="Client" action={<EditBtn onClick={() => setEditingClient(!editingClient)} active={editingClient} />}>
+            {editingClient ? (
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <LabeledInput label="Name" value={clientName} onChange={setClientName} placeholder="Full name" />
+                  <LabeledInput label="Email" type="email" value={clientEmail} onChange={setClientEmail} placeholder="email@example.com" />
+                  <LabeledInput label="Phone" type="tel" value={clientPhone} onChange={setClientPhone} placeholder="(512) 555-1234" />
                 </div>
-              )}
-            </div>
+                <button
+                  onClick={handleSaveClient}
+                  disabled={saving}
+                  className="w-full py-2.5 rounded-xl font-bold text-sm"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
+                >
+                  {saving ? 'Saving…' : 'Save Client Info'}
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2"><Field label="Name" value={client?.name} /></div>
+                <Field label="Email" value={client?.email} />
+                <Field label="Phone" value={client?.phone} />
+                {client?.notes && <div className="col-span-2"><Field label="Notes" value={client.notes} /></div>}
+              </div>
+            )}
           </Section>
 
-          {/* Event Details */}
-          <Section title="Event Details">
+          {/* ── Event Details ── */}
+          <Section
+            title="Event Details"
+            action={booking.status !== 'inquiry_sent' ? <EditBtn onClick={() => setEditingEvent(!editingEvent)} active={editingEvent} /> : undefined}
+          >
             {booking.status === 'inquiry_sent' ? (
               <div>
                 <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -364,40 +518,55 @@ export default function BookingDetail() {
                 </p>
                 <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{inquiryLink}</span>
-                  <button
-                    onClick={copyInquiryLink}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
-                    style={{ background: '#3b82f6', color: '#fff' }}
-                  >
+                  <button onClick={copyInquiryLink} className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0" style={{ background: '#3b82f6', color: '#fff' }}>
                     {copiedLink ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
               </div>
+            ) : editingEvent ? (
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <LabeledInput label="Event Date" type="date" value={eventDate} onChange={setEventDate} />
+                  </div>
+                  <LabeledInput label="Event Type" value={eventType} onChange={setEventType}>
+                    <select value={eventType} onChange={(e) => setEventType(e.target.value)}>
+                      <option value="">Select type…</option>
+                      {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </LabeledInput>
+                  <LabeledInput label="Guest Count" type="number" value={guestCount} onChange={setGuestCount} placeholder="e.g. 50" min="1" />
+                  <div className="col-span-2">
+                    <LabeledInput label="Venue / Location" value={eventVenue} onChange={setEventVenue} placeholder="Venue name or address" />
+                  </div>
+                </div>
+                <button
+                  onClick={handleSaveEvent}
+                  disabled={saving}
+                  className="w-full py-2.5 rounded-xl font-bold text-sm"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
+                >
+                  {saving ? 'Saving…' : 'Save Event Details'}
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Field label="Event Date" value={formatDate(booking.event_date)} />
-                </div>
+                <div className="col-span-2"><Field label="Event Date" value={formatDate(booking.event_date)} /></div>
                 <Field label="Event Type" value={booking.event_type} />
                 <Field label="Guest Count" value={booking.guest_count?.toString()} />
-                <div className="col-span-2">
-                  <Field label="Venue" value={booking.venue} />
-                </div>
+                <div className="col-span-2"><Field label="Venue" value={booking.venue} /></div>
                 <Field label="Start Time" value={booking.start_time} />
                 <Field label="Duration" value={booking.hours ? `${booking.hours} hrs` : undefined} />
               </div>
             )}
           </Section>
 
-          {/* Pricing & Confirmation — shown when inquiry_submitted */}
+          {/* ── Pricing & Confirmation — initial confirm ── */}
           {canConfirm && (
             <Section title="Pricing & Confirmation">
               <div className="flex flex-col gap-4">
-                {/* Package selector */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Package
-                  </label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Package</label>
                   <div className="grid grid-cols-2 gap-2">
                     {PACKAGES.map((pkg) => (
                       <button
@@ -412,211 +581,164 @@ export default function BookingDetail() {
                         }}
                       >
                         <div>{pkg.name}</div>
-                        {pkg.price > 0 && (
-                          <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                            ${(pkg.price / 100).toFixed(0)}
-                          </div>
-                        )}
+                        {pkg.price > 0 && <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>${(pkg.price / 100).toFixed(0)}</div>}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Total Price ($)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={totalPrice}
-                      onChange={(e) => setTotalPrice(e.target.value)}
-                      placeholder="e.g. 275.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Deposit ($)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      placeholder="e.g. 137.50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Hours
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="12"
-                      value={hours}
-                      onChange={(e) => setHours(e.target.value)}
-                      placeholder="e.g. 3"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      Discount (optional)
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setDiscountMode(discountMode === '$' ? '%' : '$')}
-                        className="flex-shrink-0 px-3 rounded-lg text-sm font-bold"
-                        style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#a78bfa', height: '100%' }}
-                      >
-                        {discountMode}
-                      </button>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={discountInput}
-                        onChange={(e) => setDiscountInput(e.target.value)}
-                        placeholder={discountMode === '$' ? 'e.g. 25.00' : 'e.g. 10'}
-                        style={{ flex: 1 }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <PricingFields
+                  totalPrice={totalPrice} setTotalPrice={setTotalPrice}
+                  depositAmount={depositAmount} setDepositAmount={setDepositAmount}
+                  hours={hours} setHours={setHours}
+                  startTime={startTime} setStartTime={setStartTime}
+                  discountInput={discountInput} setDiscountInput={setDiscountInput}
+                  discountMode={discountMode} setDiscountMode={setDiscountMode}
+                />
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Internal Notes
-                  </label>
-                  <textarea
-                    value={internalNotes}
-                    onChange={(e) => setInternalNotes(e.target.value)}
-                    placeholder="Any internal notes..."
-                    rows={2}
-                    style={{ resize: 'vertical' }}
-                  />
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Internal Notes</label>
+                  <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} placeholder="Any internal notes…" rows={2} style={{ resize: 'vertical' }} />
                 </div>
 
                 <button
                   onClick={handleConfirm}
                   disabled={saving}
                   className="w-full py-3.5 rounded-xl font-bold text-sm"
-                  style={{
-                    background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                    color: '#fff',
-                  }}
+                  style={{ background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
                 >
-                  {saving ? 'Sending...' : 'Confirm Booking & Send Agreement'}
+                  {saving ? 'Sending…' : 'Confirm Booking & Send Agreement'}
                 </button>
               </div>
             </Section>
           )}
 
-          {/* Pricing display (already confirmed) */}
-          {!canConfirm && booking.total_price != null && (
-            <Section title="Pricing">
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {booking.package_name && (
-                  <div className="col-span-3">
-                    <Field label="Package" value={booking.package_name} />
-                  </div>
-                )}
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Total</span>
-                  <p className="font-bold text-xl mt-0.5" style={{ color: '#818cf8' }}>{formatCents(booking.total_price)}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Deposit</span>
-                  <p className="font-bold text-xl mt-0.5" style={{ color: '#a78bfa' }}>{formatCents(booking.deposit_amount)}</p>
-                </div>
-                {booking.hours && (
+          {/* ── Pricing display / edit (after confirmed) ── */}
+          {canEditPricing && (
+            <Section
+              title="Pricing"
+              action={<EditBtn onClick={() => setEditingPricing(!editingPricing)} active={editingPricing} />}
+            >
+              {editingPricing ? (
+                <div className="flex flex-col gap-4">
                   <div>
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Hours</span>
-                    <p className="font-bold text-xl mt-0.5" style={{ color: '#ffffff' }}>{booking.hours}h</p>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Package</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PACKAGES.map((pkg) => (
+                        <button
+                          key={pkg.name}
+                          type="button"
+                          onClick={() => handlePackageSelect(pkg.name)}
+                          className="py-2.5 px-3 rounded-xl text-sm font-semibold text-left transition-all"
+                          style={{
+                            background: selectedPackage === pkg.name ? 'rgba(59,130,246,0.15)' : '#1a1a26',
+                            border: selectedPackage === pkg.name ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.08)',
+                            color: selectedPackage === pkg.name ? '#3b82f6' : 'rgba(255,255,255,0.7)',
+                          }}
+                        >
+                          <div>{pkg.name}</div>
+                          {pkg.price > 0 && <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>${(pkg.price / 100).toFixed(0)}</div>}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
-                {(booking.discount_amount_off ?? 0) > 0 && (
-                  <div>
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Discount</span>
-                    <p className="font-bold text-xl mt-0.5" style={{ color: '#34d399' }}>-{formatCents(booking.discount_amount_off)}</p>
-                  </div>
-                )}
-                {(booking.discount_amount_off ?? 0) > 0 && booking.deposit_amount != null && (
-                  <div className="col-span-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Balance Due</span>
-                    <p className="font-bold text-xl mt-0.5" style={{ color: '#60a5fa' }}>
-                      {formatCents(booking.total_price - (booking.deposit_amount ?? 0) - (booking.discount_amount_off ?? 0))}
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* Discount editor */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  {(booking.discount_amount_off ?? 0) > 0 ? 'Edit Discount' : 'Add Discount'}
-                </label>
-                <div className="flex gap-2 items-center">
-                  <button
-                    type="button"
-                    onClick={() => setDiscountMode(discountMode === '$' ? '%' : '$')}
-                    className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-bold"
-                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#a78bfa' }}
-                  >
-                    {discountMode}
-                  </button>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={discountInput}
-                    onChange={(e) => setDiscountInput(e.target.value)}
-                    placeholder={discountMode === '$' ? 'Amount off (e.g. 25)' : 'Percent off (e.g. 10)'}
-                    style={{ flex: 1 }}
+                  <PricingFields
+                    totalPrice={totalPrice} setTotalPrice={setTotalPrice}
+                    depositAmount={depositAmount} setDepositAmount={setDepositAmount}
+                    hours={hours} setHours={setHours}
+                    startTime={startTime} setStartTime={setStartTime}
+                    discountInput={discountInput} setDiscountInput={setDiscountInput}
+                    discountMode={discountMode} setDiscountMode={setDiscountMode}
                   />
-                  <button
-                    onClick={handleSaveDiscount}
-                    disabled={saving}
-                    className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-semibold"
-                    style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)', color: '#60a5fa' }}
-                  >
-                    Save
-                  </button>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSavePricing(false)}
+                      disabled={saving}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-sm"
+                      style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa' }}
+                    >
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                    {canResendAgreement && (
+                      <button
+                        onClick={() => handleSavePricing(true)}
+                        disabled={saving}
+                        className="flex-1 py-2.5 rounded-xl font-bold text-sm"
+                        style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
+                      >
+                        {saving ? 'Sending…' : 'Save & Resend Agreement'}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <div className="grid grid-cols-3 gap-4 mb-3">
+                    {booking.package_name && (
+                      <div className="col-span-3"><Field label="Package" value={booking.package_name} /></div>
+                    )}
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Total</span>
+                      <p className="font-bold text-xl mt-0.5" style={{ color: '#818cf8' }}>{formatCents(booking.total_price)}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Deposit</span>
+                      <p className="font-bold text-xl mt-0.5" style={{ color: '#a78bfa' }}>{formatCents(booking.deposit_amount)}</p>
+                    </div>
+                    {booking.hours && (
+                      <div>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Hours</span>
+                        <p className="font-bold text-xl mt-0.5" style={{ color: '#ffffff' }}>{booking.hours}h</p>
+                      </div>
+                    )}
+                    {discountCents > 0 && (
+                      <div>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>Discount</span>
+                        <p className="font-bold text-xl mt-0.5" style={{ color: '#34d399' }}>−{formatCents(discountCents)}</p>
+                      </div>
+                    )}
+                    {booking.total_price != null && booking.deposit_amount != null && (
+                      <div className="col-span-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                          {booking.status === 'deposit_paid' || booking.status === 'completed' ? 'Balance (due on event day)' : 'Balance Due'}
+                        </span>
+                        <p className="font-bold text-2xl mt-0.5" style={{ color: '#60a5fa' }}>{formatCents(balanceDueCents)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </Section>
           )}
 
-          {/* Agreement / Signing */}
+          {/* ── Agreement / Signing ── */}
           {['agreement_sent', 'confirmed'].includes(booking.status) && (
             <Section title="Agreement">
               <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Agreement sent to client. Share this signing link if needed:
+                Agreement sent. Share the signing link or resend the email:
               </p>
-              <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{signingLink}</span>
-                <button
-                  onClick={copySigningLink}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
-                  style={{ background: '#3b82f6', color: '#fff' }}
-                >
+                <button onClick={copySigningLink} className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0" style={{ background: '#3b82f6', color: '#fff' }}>
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
+              <button
+                onClick={handleResendAgreement}
+                disabled={saving}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm mb-4"
+                style={{ background: 'transparent', border: '1px solid rgba(99,102,241,0.4)', color: '#a78bfa' }}
+              >
+                {saving ? 'Sending…' : 'Resend Agreement Email'}
+              </button>
+              <CustomTermsEditor
+                value={customTerms}
+                onChange={setCustomTerms}
+                onSave={handleSaveCustomTerms}
+                saving={saving}
+              />
             </Section>
           )}
 
@@ -627,15 +749,11 @@ export default function BookingDetail() {
                 <span className="text-sm font-semibold" style={{ color: '#fbbf24' }}>Agreement not yet signed</span>
               </div>
               <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Deposit received but the client hasn't signed the agreement yet. Share the signing link:
+                Deposit received but the client hasn't signed. Share the signing link:
               </p>
               <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{signingLink}</span>
-                <button
-                  onClick={copySigningLink}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
-                  style={{ background: '#3b82f6', color: '#fff' }}
-                >
+                <button onClick={copySigningLink} className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0" style={{ background: '#3b82f6', color: '#fff' }}>
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
@@ -653,48 +771,41 @@ export default function BookingDetail() {
                 <span className="font-semibold text-sm" style={{ color: '#818cf8' }}>Agreement Signed</span>
               </div>
               {booking.signed_at && (
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   Signed on {format(parseISO(booking.signed_at), 'PPpp')}
                 </p>
               )}
               {booking.client_signature && (
-                <p className="text-sm mt-1 italic" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <p className="text-sm italic" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   Signed as: "{booking.client_signature}"
                 </p>
               )}
             </Section>
           )}
 
-          {/* Deposit */}
+          {/* ── Deposit ── */}
           {canMarkDeposit && (
             <Section title="Deposit">
               <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {booking.status === 'signed'
                   ? <>Agreement signed! Waiting for deposit of <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> via CashApp.</>
-                  : <>Deposit of <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCents(booking.deposit_amount)}</span> received before agreement was signed — client will be reminded to sign.</>
+                  : <>Mark deposit as received. Client will be sent a reminder to sign the agreement.</>
                 }
               </p>
               <button
                 onClick={handleMarkDepositPaid}
                 disabled={saving}
-                className="w-full py-3 rounded-xl font-bold text-sm"
-                style={{
-                  background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                  color: '#fff',
-                }}
+                className="w-full py-3 rounded-xl font-bold text-sm mb-3"
+                style={{ background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
               >
-                {saving ? 'Saving...' : 'Mark Deposit Received'}
+                {saving ? 'Saving…' : 'Mark Deposit Received'}
               </button>
               {hasEventDate && (
                 <button
                   onClick={handleSendBalanceReminder}
                   disabled={saving || balanceReminderSent}
-                  className="w-full py-2.5 rounded-xl font-semibold text-sm mt-3"
-                  style={{
-                    background: 'transparent',
-                    border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
-                    color: balanceReminderSent ? '#818cf8' : '#a78bfa',
-                  }}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm"
+                  style={{ background: 'transparent', border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)', color: balanceReminderSent ? '#818cf8' : '#a78bfa' }}
                 >
                   {balanceReminderSent ? 'Reminder Sent ✓' : 'Send Balance Reminder'}
                 </button>
@@ -719,11 +830,7 @@ export default function BookingDetail() {
                   onClick={handleSendBalanceReminder}
                   disabled={saving || balanceReminderSent}
                   className="w-full py-2.5 rounded-xl font-semibold text-sm"
-                  style={{
-                    background: 'transparent',
-                    border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
-                    color: balanceReminderSent ? '#818cf8' : '#a78bfa',
-                  }}
+                  style={{ background: 'transparent', border: balanceReminderSent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)', color: balanceReminderSent ? '#818cf8' : '#a78bfa' }}
                 >
                   {balanceReminderSent ? 'Reminder Sent ✓' : 'Send Balance Reminder'}
                 </button>
@@ -731,7 +838,7 @@ export default function BookingDetail() {
             </Section>
           )}
 
-          {/* Add to Calendar */}
+          {/* ── Calendar ── */}
           {hasEventDate && client && (
             <button
               onClick={() => downloadICS(booking, client)}
@@ -748,13 +855,13 @@ export default function BookingDetail() {
             </button>
           )}
 
-          {/* Internal Notes (for non-confirm states) */}
+          {/* ── Internal Notes ── */}
           {!canConfirm && (
             <Section title="Internal Notes">
               <textarea
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
-                placeholder="Private notes (not visible to client)..."
+                placeholder="Private notes (not visible to client)…"
                 rows={3}
                 style={{ resize: 'vertical' }}
               />
@@ -769,7 +876,7 @@ export default function BookingDetail() {
             </Section>
           )}
 
-          {/* Action buttons */}
+          {/* ── Action Buttons ── */}
           <div className="flex gap-3">
             {canMarkComplete && (
               <button
@@ -793,7 +900,7 @@ export default function BookingDetail() {
             )}
           </div>
 
-          {/* Post-Event Survey */}
+          {/* ── Post-Event Survey ── */}
           {booking.status === 'completed' && (
             <Section title="Post-Event Survey">
               <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -803,23 +910,110 @@ export default function BookingDetail() {
                 onClick={handleSendSurvey}
                 disabled={saving || surveySent}
                 className="w-full py-2.5 rounded-xl font-semibold text-sm"
-                style={{
-                  background: 'transparent',
-                  border: surveySent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)',
-                  color: surveySent ? '#818cf8' : '#a78bfa',
-                }}
+                style={{ background: 'transparent', border: surveySent ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(99,102,241,0.5)', color: surveySent ? '#818cf8' : '#a78bfa' }}
               >
                 {surveySent ? 'Survey Sent ✓' : 'Send Post-Event Survey'}
               </button>
             </Section>
           )}
 
-          {/* Status Timeline */}
+          {/* ── Status Timeline ── */}
           <Section title="Booking Progress">
             <StepTimeline status={booking.status} isSigned={!!booking.client_signature} />
           </Section>
+
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Shared Pricing Fields sub-component ── */
+function PricingFields({
+  totalPrice, setTotalPrice,
+  depositAmount, setDepositAmount,
+  hours, setHours,
+  startTime, setStartTime,
+  discountInput, setDiscountInput,
+  discountMode, setDiscountMode,
+}: {
+  totalPrice: string; setTotalPrice: (v: string) => void;
+  depositAmount: string; setDepositAmount: (v: string) => void;
+  hours: string; setHours: (v: string) => void;
+  startTime: string; setStartTime: (v: string) => void;
+  discountInput: string; setDiscountInput: (v: string) => void;
+  discountMode: '$' | '%'; setDiscountMode: (v: '$' | '%') => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Total Price ($)</label>
+        <input type="number" min="0" step="0.01" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} placeholder="e.g. 275.00" />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Deposit ($)</label>
+        <input type="number" min="0" step="0.01" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="e.g. 137.50" />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Hours</label>
+        <input type="number" min="1" max="12" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="e.g. 3" />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Start Time</label>
+        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ colorScheme: 'dark' }} />
+      </div>
+      <div className="col-span-2">
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Discount (optional)</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setDiscountMode(discountMode === '$' ? '%' : '$')}
+            className="flex-shrink-0 px-3 rounded-lg text-sm font-bold"
+            style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#a78bfa' }}
+          >
+            {discountMode}
+          </button>
+          <input
+            type="number" min="0" step="0.01"
+            value={discountInput} onChange={(e) => setDiscountInput(e.target.value)}
+            placeholder={discountMode === '$' ? 'e.g. 25.00' : 'e.g. 10'}
+            style={{ flex: 1 }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Custom Terms editor ── */
+function CustomTermsEditor({
+  value, onChange, onSave, saving,
+}: {
+  value: string; onChange: (v: string) => void; onSave: () => void; saving: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        Custom Terms / Addendum
+      </label>
+      <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        Any additional terms will be appended to the standard contract terms.
+      </p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. DJ KJ will receive a 15% friend discount. Client agrees to provide dinner for performer…"
+        rows={3}
+        style={{ resize: 'vertical' }}
+      />
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="mt-2 px-4 py-2 rounded-lg text-sm font-semibold"
+        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+      >
+        {saving ? 'Saving…' : 'Save Terms'}
+      </button>
     </div>
   );
 }

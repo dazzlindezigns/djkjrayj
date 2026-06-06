@@ -26,9 +26,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Format values
   const totalDollars = booking.total_price ? `$${(booking.total_price / 100).toFixed(2)}` : 'TBD';
   const depositDollars = booking.deposit_amount ? `$${(booking.deposit_amount / 100).toFixed(2)}` : 'TBD';
+  const discountOff = booking.discount_amount_off ?? 0;
   const balanceDollars = booking.total_price && booking.deposit_amount
-    ? `$${((booking.total_price - booking.deposit_amount) / 100).toFixed(2)}`
+    ? `$${((booking.total_price - booking.deposit_amount - discountOff) / 100).toFixed(2)}`
     : 'TBD';
+  const discountDollars = discountOff > 0 ? `-$${(discountOff / 100).toFixed(2)}` : null;
 
   const eventDate = booking.event_date
     ? new Date(booking.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -79,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   page.drawText('EVENT DETAILS', { x: margin, y, font: boldFont, size: 11, color: darkGray });
   y -= 16;
 
-  const detailRows = [
+  const detailRows: [string, string][] = [
     ['Event Date', eventDate],
     ['Event Type', booking.event_type || 'TBD'],
     ['Venue', booking.venue || 'TBD'],
@@ -88,6 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ['Start Time', startTimeFormatted],
     ['End Time', endTime],
     ['Total Price', totalDollars],
+    ...(discountDollars ? [['Discount', discountDollars] as [string, string]] : []),
     ['Deposit Due', depositDollars],
     ['Balance Due', balanceDollars],
   ];
@@ -115,15 +118,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `6. LIABILITY. DJ KJ is not responsible for venue or technical issues outside of the Performer's control.`,
   ];
 
-  for (const term of terms) {
-    // Word wrap
-    const words = term.split(' ');
+  function wrapAndDraw(text: string, font: typeof regularFont, size: number, color: typeof black) {
+    const words = text.split(' ');
     let line = '';
     const lines: string[] = [];
     for (const word of words) {
       const testLine = line ? line + ' ' + word : word;
-      const lineWidth = regularFont.widthOfTextAtSize(testLine, 9);
-      if (lineWidth > contentWidth) {
+      if (font.widthOfTextAtSize(testLine, size) > contentWidth) {
         lines.push(line);
         line = word;
       } else {
@@ -131,13 +132,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
     if (line) lines.push(line);
-
     for (const l of lines) {
-      if (y < 160) break; // stop if too close to bottom
-      page.drawText(l, { x: margin, y, font: regularFont, size: 9, color: black });
-      y -= 13;
+      if (y < 160) break;
+      page.drawText(l, { x: margin, y, font, size, color });
+      y -= size + 4;
     }
+  }
+
+  for (const term of terms) {
+    wrapAndDraw(term, regularFont, 9, black);
     y -= 4;
+  }
+
+  // Custom terms addendum
+  if (booking.custom_terms) {
+    y -= 8;
+    page.drawText('ADDENDUM', { x: margin, y, font: boldFont, size: 10, color: darkGray });
+    y -= 14;
+    wrapAndDraw(booking.custom_terms, regularFont, 9, black);
   }
 
   // Signature section
