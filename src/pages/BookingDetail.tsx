@@ -266,7 +266,7 @@ export default function BookingDetail() {
         package_name: selectedPackage || null,
         total_price: totalCents,
         deposit_amount: depositCents,
-        discount_amount_off: discountCents,
+        ...(discountCents > 0 ? { discount_amount_off: discountCents } : {}),
         hours: hours ? parseInt(hours) : null,
         start_time: startTime || null,
         internal_notes: internalNotes || null,
@@ -294,7 +294,7 @@ export default function BookingDetail() {
         package_name: selectedPackage || null,
         total_price: totalCents,
         deposit_amount: depositCents,
-        discount_amount_off: discountCents,
+        ...(discountCents > 0 ? { discount_amount_off: discountCents } : {}),
         hours: hours ? parseInt(hours) : null,
         start_time: startTime || null,
       })
@@ -318,7 +318,7 @@ export default function BookingDetail() {
     setError('');
     const { error: err } = await supabase
       .from('bookings')
-      .update({ custom_terms: customTerms.trim() || null })
+      .update({ custom_terms: customTerms.trim() || null } as Record<string, unknown>)
       .eq('id', booking.id);
     if (err) { setError(err.message); } else { showSuccess('Custom terms saved.'); }
     setSaving(false);
