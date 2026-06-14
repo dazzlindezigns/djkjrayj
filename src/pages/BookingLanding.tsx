@@ -646,6 +646,17 @@ export default function BookingLanding() {
         >
           © 2025 DJ KJ. All rights reserved.
         </p>
+        <a
+          href="/login"
+          style={{
+            color: 'rgba(255,255,255,0.18)',
+            fontSize: '0.75rem',
+            textDecoration: 'none',
+            marginTop: '0.5rem',
+          }}
+        >
+          Admin
+        </a>
       </footer>
 
       {/* Package Detail Modal */}
