@@ -38,6 +38,34 @@ export default function Dashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
+  useEffect(() => {
+    registerPush();
+  }, []);
+
+  async function registerPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) return; // already subscribed
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          'BNiZUK3vExOfwHM68sses_j9_yAk5VqMzoXOwQin8lrtEDRDnSXE-F4Pud7RU6Bw-XRqo-7Kus6jDbGNaSEOos4'
+        ) as BufferSource,
+      });
+      await fetch('/api/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+    } catch (_err) {
+      // non-fatal — push is best-effort
+    }
+  }
+
   const loadBookings = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -204,4 +232,11 @@ export default function Dashboard() {
       )}
     </div>
   );
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }

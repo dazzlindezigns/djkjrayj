@@ -79,17 +79,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Failed to create booking: ' + (bookingError?.message ?? 'unknown') });
   }
 
-  // 4. Fire notification email (best-effort — don't fail the response if this errors)
-  try {
-    const appUrl = process.env.VITE_APP_URL || '';
-    await fetch(`${appUrl}/api/send-email`, {
+  const appUrl = process.env.VITE_APP_URL || '';
+
+  // 4. Fire notification email + push (best-effort)
+  await Promise.allSettled([
+    fetch(`${appUrl}/api/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'inquiry_notify', booking_id: booking.id }),
-    });
-  } catch (_err) {
-    // non-fatal
-  }
+    }),
+    fetch(`${appUrl}/api/send-push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '📥 New Booking Inquiry',
+        body: `${name} submitted an inquiry${event_type ? ` for a ${event_type}` : ''}`,
+        url: `/dashboard/booking/${booking.id}`,
+      }),
+    }),
+  ]);
 
   return res.status(200).json({ success: true, bookingId: booking.id });
 }
