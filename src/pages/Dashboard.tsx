@@ -144,6 +144,20 @@ export default function Dashboard() {
           <StatCard label="Deposit Due" value={depositCount} color="#a78bfa" />
         </div>
 
+        {/* Quick links */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => navigate('/dashboard/packages')}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold"
+            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Manage Packages
+          </button>
+        </div>
+
         {/* Filter tabs */}
         <div
           className="flex gap-1 p-1 rounded-xl mb-5"

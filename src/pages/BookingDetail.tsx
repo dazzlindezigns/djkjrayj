@@ -502,6 +502,46 @@ export default function BookingDetail() {
                 <Field label="Email" value={client?.email} />
                 <Field label="Phone" value={client?.phone} />
                 {client?.notes && <div className="col-span-2"><Field label="Notes" value={client.notes} /></div>}
+                {(client?.phone || client?.email) && (
+                  <div className="col-span-2 flex gap-2 pt-1">
+                    {client?.phone && (
+                      <a
+                        href={`tel:${client.phone.replace(/\D/g, '')}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold flex-1 justify-center"
+                        style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', color: '#60a5fa', textDecoration: 'none' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.29h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                        Call
+                      </a>
+                    )}
+                    {client?.phone && (
+                      <a
+                        href={`sms:${client.phone.replace(/\D/g, '')}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold flex-1 justify-center"
+                        style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', textDecoration: 'none' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Text
+                      </a>
+                    )}
+                    {client?.email && (
+                      <a
+                        href={`mailto:${client.email}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold flex-1 justify-center"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
+                        </svg>
+                        Email
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </Section>
@@ -814,8 +854,8 @@ export default function BookingDetail() {
           )}
 
           {booking.status === 'deposit_paid' && (
-            <Section title="Deposit">
-              <div className="flex items-center gap-2 mb-3">
+            <Section title="Deposit & Balance">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#818cf8' }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -825,6 +865,17 @@ export default function BookingDetail() {
                   Deposit Received — {formatCents(booking.deposit_amount)}
                 </span>
               </div>
+              <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Balance due on event day: <span style={{ color: '#60a5fa', fontWeight: 600 }}>{formatCents(balanceDueCents)}</span> via CashApp.
+              </p>
+              <button
+                onClick={handleMarkCompleted}
+                disabled={saving}
+                className="w-full py-3 rounded-xl font-bold text-sm mb-3"
+                style={{ background: saving ? 'rgba(99,102,241,0.5)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff' }}
+              >
+                {saving ? 'Saving…' : 'Mark Balance Received & Complete'}
+              </button>
               {hasEventDate && (
                 <button
                   onClick={handleSendBalanceReminder}
