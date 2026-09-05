@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DJ KJ</string>
+    <string name="title_activity_main">DJ KJ</string>
+    <string name="package_name">com.djkjatx.bookings</string>
+    <string name="custom_url_scheme">com.djkjatx.bookings</string>
+</resources>

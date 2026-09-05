@@ -7,6 +7,8 @@ import StatusBadge from '../components/StatusBadge';
 import StepTimeline from '../components/StepTimeline';
 import { sendEmail } from '../lib/email';
 import { downloadICS } from '../lib/ics';
+import MessageThread from '../components/MessageThread';
+import CallInterface from '../components/CallInterface';
 
 const PACKAGES = [
   { name: 'Starter Set', price: 15000 },
@@ -904,6 +906,20 @@ export default function BookingDetail() {
               </svg>
               Add to Calendar (.ics)
             </button>
+          )}
+
+          {/* ── Calls ── */}
+          {!canConfirm && (
+            <Section title="Call">
+              <CallInterface clientPhone={client?.phone} clientName={client?.name} />
+            </Section>
+          )}
+
+          {/* ── Messages ── */}
+          {!canConfirm && (
+            <Section title="Messages">
+              <MessageThread bookingId={booking.id} clientPhone={client?.phone} />
+            </Section>
           )}
 
           {/* ── Internal Notes ── */}
