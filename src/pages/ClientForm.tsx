@@ -17,6 +17,17 @@ const EVENT_TYPES = [
   'Other',
 ];
 
+const VENUE_TYPES = [
+  'House / Backyard',
+  'Event Center',
+  'Pool / Pool Party',
+  'School / Gymnasium',
+  'Park / Outdoor',
+  'Restaurant / Bar',
+  'Church / Hall',
+  'Other',
+];
+
 const PACKAGE_OPTIONS = [
   'Starter Set ($150) — 2 hrs, basic setup',
   'The Vibe ($275) — 3 hrs, lights + hype',
@@ -35,6 +46,9 @@ export default function ClientForm() {
   // Form fields
   const [eventDate, setEventDate] = useState('');
   const [eventType, setEventType] = useState('');
+  const [eventTypeOther, setEventTypeOther] = useState('');
+  const [venueType, setVenueType] = useState('');
+  const [venueTypeOther, setVenueTypeOther] = useState('');
   const [venue, setVenue] = useState('');
   const [guestCount, setGuestCount] = useState('');
   const [packagePref, setPackagePref] = useState('');
@@ -81,6 +95,18 @@ export default function ClientForm() {
       setError('Event date and type are required.');
       return;
     }
+    if (eventType === 'Other' && !eventTypeOther.trim()) {
+      setError('Please describe your event type.');
+      return;
+    }
+    if (!venueType) {
+      setError('Please select a venue type.');
+      return;
+    }
+    if (venueType === 'Other' && !venueTypeOther.trim()) {
+      setError('Please describe your venue type.');
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -100,7 +126,9 @@ export default function ClientForm() {
       .update({
         status: 'inquiry_submitted',
         event_date: eventDate,
-        event_type: eventType,
+        event_type: eventType === 'Other' ? `Other: ${eventTypeOther.trim()}` : eventType,
+        event_type_other: eventType === 'Other' ? eventTypeOther.trim() : null,
+        venue_type: venueType === 'Other' ? `Other: ${venueTypeOther.trim()}` : venueType,
         venue: venue || null,
         guest_count: guestCount ? parseInt(guestCount) : null,
         package_name: pkgName,
@@ -266,6 +294,43 @@ export default function ClientForm() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
+            {eventType === 'Other' && (
+              <input
+                type="text"
+                value={eventTypeOther}
+                onChange={(e) => setEventTypeOther(e.target.value)}
+                placeholder="Describe your event..."
+                required
+                className="mt-2"
+              />
+            )}
+          </div>
+
+          {/* Venue Type */}
+          <div>
+            <label className="block text-sm font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              Venue Type <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <select
+              value={venueType}
+              onChange={(e) => setVenueType(e.target.value)}
+              required
+            >
+              <option value="">Select venue type...</option>
+              {VENUE_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+            {venueType === 'Other' && (
+              <input
+                type="text"
+                value={venueTypeOther}
+                onChange={(e) => setVenueTypeOther(e.target.value)}
+                placeholder="Describe your venue..."
+                required
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* Venue */}
@@ -358,6 +423,36 @@ export default function ClientForm() {
               rows={3}
               style={{ resize: 'vertical' }}
             />
+          </div>
+
+          {/* Add-ons */}
+          <div>
+            <label className="block text-sm font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              Add-ons
+            </label>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: 'Photo Booth', desc: 'Fun props & instant prints for your guests' },
+                { label: 'Themed 3D Hologram', desc: 'Immersive holographic visual experience' },
+              ].map(({ label, desc }) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between py-3 px-4 rounded-xl"
+                  style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.07)', opacity: 0.6 }}
+                >
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{desc}</p>
+                  </div>
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-3"
+                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa' }}
+                  >
+                    Coming Soon
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {error && (

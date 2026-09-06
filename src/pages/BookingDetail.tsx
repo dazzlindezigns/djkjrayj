@@ -598,6 +598,7 @@ export default function BookingDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2"><Field label="Event Date" value={formatDate(booking.event_date)} /></div>
                 <Field label="Event Type" value={booking.event_type} />
+                <Field label="Venue Type" value={booking.venue_type} />
                 <Field label="Guest Count" value={booking.guest_count?.toString()} />
                 <div className="col-span-2"><Field label="Venue" value={booking.venue} /></div>
                 <Field label="Start Time" value={booking.start_time} />

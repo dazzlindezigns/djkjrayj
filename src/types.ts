@@ -25,7 +25,9 @@ export interface Booking {
   status: BookingStatus;
   event_date?: string;
   event_type?: string;
+  event_type_other?: string;
   venue?: string;
+  venue_type?: string;
   guest_count?: number;
   start_time?: string;
   hours?: number;
