@@ -8,6 +8,7 @@ import ClientForm from './pages/ClientForm';
 import Sign from './pages/Sign';
 import BookingLanding from './pages/BookingLanding';
 import Survey from './pages/Survey';
+import PackageAdmin from './pages/PackageAdmin';
 import type { Session } from '@supabase/supabase-js';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,14 @@ export default function App() {
         element={
           <AuthGuard>
             <BookingDetail />
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/dashboard/packages"
+        element={
+          <AuthGuard>
+            <PackageAdmin />
           </AuthGuard>
         }
       />

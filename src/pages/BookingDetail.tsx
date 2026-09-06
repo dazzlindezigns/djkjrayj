@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '../supabase';
-import type { Booking } from '../types';
+import type { Booking, Package } from '../types';
 import StatusBadge from '../components/StatusBadge';
 import StepTimeline from '../components/StepTimeline';
 import { sendEmail } from '../lib/email';
@@ -10,12 +10,7 @@ import { downloadICS } from '../lib/ics';
 import MessageThread from '../components/MessageThread';
 import CallInterface from '../components/CallInterface';
 
-const PACKAGES = [
-  { name: 'Starter Set', price: 15000 },
-  { name: 'The Vibe', price: 27500 },
-  { name: 'Full Send', price: 40000 },
-  { name: 'Custom', price: 0 },
-];
+const CUSTOM_PKG = { name: 'Custom', price: 0 };
 
 const EVENT_TYPES = [
   'Birthday Party', 'Quinceañera', 'Sweet 16', 'Wedding', 'School Dance',
@@ -123,6 +118,14 @@ export default function BookingDetail() {
   const [balanceReminderSent, setBalanceReminderSent] = useState(false);
   const [surveySent, setSurveySent] = useState(false);
 
+  const [packages, setPackages] = useState<{ name: string; price: number }[]>([CUSTOM_PKG]);
+
+  useEffect(() => {
+    supabase.from('packages').select('name,price').order('sort_order').then(({ data }) => {
+      if (data?.length) setPackages([...(data as Pick<Package, 'name' | 'price'>[]), CUSTOM_PKG]);
+    });
+  }, []);
+
   // Edit toggles
   const [editingClient, setEditingClient] = useState(false);
   const [editingEvent, setEditingEvent] = useState(false);
@@ -202,7 +205,7 @@ export default function BookingDetail() {
 
   function handlePackageSelect(pkgName: string) {
     setSelectedPackage(pkgName);
-    const pkg = PACKAGES.find((p) => p.name === pkgName);
+    const pkg = packages.find((p) => p.name === pkgName);
     if (pkg && pkg.price > 0) {
       setTotalPrice(String(pkg.price / 100));
       setDepositAmount(String(pkg.price / 100 / 2));
@@ -268,7 +271,7 @@ export default function BookingDetail() {
         package_name: selectedPackage || null,
         total_price: totalCents,
         deposit_amount: depositCents,
-        discount_amount_off: discountCents,
+        ...(discountCents > 0 ? { discount_amount_off: discountCents } : {}),
         hours: hours ? parseInt(hours) : null,
         start_time: startTime || null,
         internal_notes: internalNotes || null,
@@ -296,7 +299,7 @@ export default function BookingDetail() {
         package_name: selectedPackage || null,
         total_price: totalCents,
         deposit_amount: depositCents,
-        discount_amount_off: discountCents,
+        ...(discountCents > 0 ? { discount_amount_off: discountCents } : {}),
         hours: hours ? parseInt(hours) : null,
         start_time: startTime || null,
       })
@@ -320,7 +323,7 @@ export default function BookingDetail() {
     setError('');
     const { error: err } = await supabase
       .from('bookings')
-      .update({ custom_terms: customTerms.trim() || null })
+      .update({ custom_terms: customTerms.trim() || null } as Record<string, unknown>)
       .eq('id', booking.id);
     if (err) { setError(err.message); } else { showSuccess('Custom terms saved.'); }
     setSaving(false);
@@ -610,7 +613,7 @@ export default function BookingDetail() {
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Package</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {PACKAGES.map((pkg) => (
+                    {packages.map((pkg) => (
                       <button
                         key={pkg.name}
                         type="button"
@@ -666,7 +669,7 @@ export default function BookingDetail() {
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Package</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {PACKAGES.map((pkg) => (
+                      {packages.map((pkg) => (
                         <button
                           key={pkg.name}
                           type="button"

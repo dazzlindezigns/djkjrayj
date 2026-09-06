@@ -200,16 +200,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .update({ contract_pdf_path: storagePath })
     .eq('id', booking_id);
 
-  // Send contract email (call our own send-email API)
-  const emailRes = await fetch(`${process.env.VITE_APP_URL}/api/send-email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'contract', booking_id, attachment_base64: pdfBase64 }),
-  });
+  const appUrl = process.env.VITE_APP_URL ?? '';
+  const clientName = client.name;
 
-  if (!emailRes.ok) {
-    console.error('send-email failed:', await emailRes.text());
-  }
+  // Send contract email + push notification (best-effort)
+  await Promise.allSettled([
+    fetch(`${appUrl}/api/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'contract', booking_id, attachment_base64: pdfBase64 }),
+    }),
+    fetch(`${appUrl}/api/send-push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '✍️ Agreement Signed',
+        body: `${clientName} just signed their booking agreement`,
+        url: `/dashboard/booking/${booking_id}`,
+      }),
+    }),
+  ]);
 
   return res.status(200).json({ success: true, path: storagePath });
 }

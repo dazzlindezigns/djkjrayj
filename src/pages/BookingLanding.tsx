@@ -1,4 +1,6 @@
 import { useState, useRef, FormEvent, useEffect } from 'react';
+import { supabase } from '../supabase';
+import type { Package } from '../types';
 
 interface PackageInfo {
   name: string;
@@ -9,63 +11,6 @@ interface PackageInfo {
   inclusions: string[];
   formValue: string;
 }
-
-const PACKAGE_DATA: PackageInfo[] = [
-  {
-    name: 'Starter Set',
-    price: '$150',
-    description: '2 hours',
-    tagline: 'Perfect for small gatherings',
-    popular: false,
-    formValue: 'Starter Set ($150)',
-    inclusions: [
-      '2 hours of live DJ performance',
-      'Professional speakers & subwoofer',
-      'Music customization — you pick the vibe',
-      'Wireless mic for announcements',
-      'Basic LED lighting',
-      'Live song request handling',
-      'Setup & teardown included',
-    ],
-  },
-  {
-    name: 'The Vibe',
-    price: '$275',
-    description: '3 hours',
-    tagline: 'Great for parties',
-    popular: true,
-    formValue: 'The Vibe ($275)',
-    inclusions: [
-      '3 hours of live DJ performance',
-      'Professional speakers & powered subwoofer',
-      'Full music customization with playlist coordination',
-      'Wireless mic for announcements & hype',
-      'Enhanced LED lighting package',
-      'Live song requests & crowd reading',
-      'Venue walkthrough before event',
-      'Setup & teardown included',
-    ],
-  },
-  {
-    name: 'Full Send',
-    price: '$400',
-    description: '4+ hours',
-    tagline: 'Full event coverage',
-    popular: false,
-    formValue: 'Full Send ($400)',
-    inclusions: [
-      '4+ hours of live DJ performance',
-      'Premium dual speakers & powered subwoofer',
-      'Full event music direction — start to finish',
-      'Wireless mic for announcements, toasts & hype',
-      'Full LED + moving light show',
-      'Live song requests & crowd reading',
-      'Coordination with your event timeline',
-      'Priority booking & dedicated planning call',
-      'Setup & teardown included',
-    ],
-  },
-];
 
 const EVENT_TYPES = [
   'Birthday Party',
@@ -115,6 +60,18 @@ const EMPTY_FORM: FormData = {
   special_requests: '',
 };
 
+function pkgToInfo(pkg: Package): PackageInfo {
+  return {
+    name: pkg.name,
+    price: `$${(pkg.price / 100).toFixed(0)}`,
+    description: pkg.duration,
+    tagline: pkg.tagline,
+    popular: pkg.popular,
+    inclusions: pkg.inclusions,
+    formValue: `${pkg.name} ($${(pkg.price / 100).toFixed(0)})`,
+  };
+}
+
 export default function BookingLanding() {
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
@@ -122,6 +79,17 @@ export default function BookingLanding() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
+  const [packageData, setPackageData] = useState<PackageInfo[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('packages')
+      .select('*')
+      .order('sort_order')
+      .then(({ data }) => {
+        if (data) setPackageData((data as Package[]).map(pkgToInfo));
+      });
+  }, []);
 
   useEffect(() => {
     if (selectedPackage) {
@@ -372,7 +340,7 @@ export default function BookingLanding() {
             gap: '1.5rem',
           }}
         >
-          {PACKAGE_DATA.map((pkg) => (
+          {packageData.map((pkg) => (
             <PackageCard
               key={pkg.name}
               name={pkg.name}

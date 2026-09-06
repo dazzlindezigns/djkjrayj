@@ -62,3 +62,15 @@ export interface Survey {
   dj_rating?: number;
   dj_comments?: string;
 }
+
+export interface Package {
+  id: string;
+  created_at: string;
+  sort_order: number;
+  name: string;
+  price: number;
+  duration: string;
+  tagline: string;
+  popular: boolean;
+  inclusions: string[];
+}
