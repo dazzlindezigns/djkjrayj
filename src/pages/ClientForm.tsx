@@ -478,7 +478,8 @@ export default function ClientForm() {
               </div>
               <span className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 I agree to receive text messages from <strong style={{ color: '#fff' }}>DJ KJ</strong> regarding my booking, including confirmations, reminders, and updates. Message and data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time. View our{' '}
-                <a href="/privacy" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a>.
+                <a href="/privacy" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a> and{' '}
+                <a href="/terms" style={{ color: '#818cf8', textDecoration: 'underline' }}>Terms & Conditions</a>.
               </span>
             </label>
           </div>

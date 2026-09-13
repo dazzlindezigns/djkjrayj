@@ -614,17 +614,17 @@ export default function BookingLanding() {
         >
           © 2025 DJ KJ. All rights reserved.
         </p>
-        <a
-          href="/login"
-          style={{
-            color: 'rgba(255,255,255,0.18)',
-            fontSize: '0.75rem',
-            textDecoration: 'none',
-            marginTop: '0.5rem',
-          }}
-        >
-          Admin
-        </a>
+        <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+          <a href="/privacy" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textDecoration: 'none' }}>
+            Privacy Policy
+          </a>
+          <a href="/terms" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textDecoration: 'none' }}>
+            Terms & Conditions
+          </a>
+          <a href="/login" style={{ color: 'rgba(255,255,255,0.18)', fontSize: '0.75rem', textDecoration: 'none' }}>
+            Admin
+          </a>
+        </div>
       </footer>
 
       {/* Package Detail Modal */}
