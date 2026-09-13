@@ -25,6 +25,17 @@ const EVENT_TYPES = [
   'Other',
 ];
 
+const VENUE_TYPES = [
+  'House / Backyard',
+  'Event Center',
+  'Pool',
+  'School',
+  'Park',
+  'Restaurant',
+  'Church',
+  'Other',
+];
+
 const PACKAGES = [
   { value: 'Starter Set ($150)', label: 'Starter Set ($150)' },
   { value: 'The Vibe ($275)', label: 'The Vibe ($275)' },
@@ -75,6 +86,10 @@ function pkgToInfo(pkg: Package): PackageInfo {
 export default function BookingLanding() {
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [eventTypeOther, setEventTypeOther] = useState('');
+  const [venueType, setVenueType] = useState('');
+  const [venueTypeOther, setVenueTypeOther] = useState('');
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -117,6 +132,24 @@ export default function BookingLanding() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (form.event_type === 'Other' && !eventTypeOther.trim()) {
+      setError('Please describe your event type.');
+      return;
+    }
+    if (!venueType) {
+      setError('Please select a venue type.');
+      return;
+    }
+    if (venueType === 'Other' && !venueTypeOther.trim()) {
+      setError('Please describe your venue.');
+      return;
+    }
+    if (!smsOptIn) {
+      setError('Please agree to receive text message updates to continue.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -126,6 +159,10 @@ export default function BookingLanding() {
         body: JSON.stringify({
           ...form,
           guest_count: form.guest_count ? Number(form.guest_count) : undefined,
+          event_type_other: form.event_type === 'Other' ? eventTypeOther : undefined,
+          venue_type: venueType === 'Other' ? venueTypeOther : venueType,
+          sms_opt_in: true,
+          sms_opt_in_at: new Date().toISOString(),
         }),
       });
 
@@ -444,6 +481,39 @@ export default function BookingLanding() {
                   </select>
                 </Field>
 
+                {form.event_type === 'Other' && (
+                  <Field label="Describe Your Event" required>
+                    <input
+                      type="text"
+                      value={eventTypeOther}
+                      onChange={(e) => setEventTypeOther(e.target.value)}
+                      placeholder="Tell us about your event…"
+                      required
+                    />
+                  </Field>
+                )}
+
+                <Field label="Venue Type" required>
+                  <select value={venueType} onChange={(e) => setVenueType(e.target.value)} required>
+                    <option value="">Select venue type…</option>
+                    {VENUE_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                {venueType === 'Other' && (
+                  <Field label="Describe Your Venue" required>
+                    <input
+                      type="text"
+                      value={venueTypeOther}
+                      onChange={(e) => setVenueTypeOther(e.target.value)}
+                      placeholder="Describe your venue…"
+                      required
+                    />
+                  </Field>
+                )}
+
                 <Field label="Event Date">
                   <input
                     type="date"
@@ -515,6 +585,78 @@ export default function BookingLanding() {
                     style={{ resize: 'vertical' }}
                   />
                 </Field>
+
+                {/* Add-ons */}
+                <div>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem', letterSpacing: '0.03em' }}>
+                    Add-ons
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {[
+                      { label: 'Photo Booth' },
+                      { label: 'Themed 3D Hologram' },
+                    ].map(({ label }) => (
+                      <div
+                        key={label}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.07)',
+                          borderRadius: 10,
+                          padding: '0.75rem 1rem',
+                          opacity: 0.65,
+                        }}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.95rem', fontWeight: 600 }}>{label}</span>
+                        <span
+                          style={{
+                            background: 'rgba(139,92,246,0.15)',
+                            border: '1px solid rgba(139,92,246,0.3)',
+                            color: '#a78bfa',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            padding: '3px 10px',
+                            borderRadius: 99,
+                          }}
+                        >
+                          Coming Soon
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SMS opt-in */}
+                <div
+                  style={{
+                    background: 'rgba(59,130,246,0.06)',
+                    border: '1px solid rgba(59,130,246,0.2)',
+                    borderRadius: 10,
+                    padding: '1rem',
+                  }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={smsOptIn}
+                      onChange={(e) => setSmsOptIn(e.target.checked)}
+                      style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: '#8b5cf6', cursor: 'pointer' }}
+                    />
+                    <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                      I agree to receive text messages from DJ KJ about my booking (confirmations, reminders, and updates).
+                      Message &amp; data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time.
+                      See our{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a>
+                      {' '}and{' '}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Terms & Conditions</a>.
+                      {' '}<span style={{ color: '#8b5cf6' }}>*</span>
+                    </span>
+                  </label>
+                </div>
 
                 {error && (
                   <div

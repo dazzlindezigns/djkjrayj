@@ -15,13 +15,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     email,
     phone,
     event_type,
+    event_type_other,
     event_date,
     venue,
+    venue_type,
     guest_count,
     package_preference,
     start_time,
     music_notes,
     special_requests,
+    sms_opt_in,
+    sms_opt_in_at,
   } = req.body;
 
   if (!name || !email || !phone) {
@@ -65,12 +69,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       client_id: clientId,
       status: 'inquiry_submitted',
       event_type: event_type || null,
+      event_type_other: event_type_other || null,
       event_date: event_date || null,
       venue: venue || null,
+      venue_type: venue_type || null,
       guest_count: guest_count || null,
       package_name: package_preference || null,
       start_time: start_time || null,
       internal_notes,
+      sms_opt_in: sms_opt_in ?? false,
+      sms_opt_in_at: sms_opt_in_at || null,
     })
     .select('id')
     .single();
