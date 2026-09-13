@@ -40,6 +40,8 @@ export interface Booking {
   internal_notes?: string;
   discount_amount_off?: number;
   custom_terms?: string;
+  sms_opt_in?: boolean;
+  sms_opt_in_at?: string;
   inquiry_token: string;
   // joined
   clients?: Client;

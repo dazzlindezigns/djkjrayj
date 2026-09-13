@@ -55,6 +55,7 @@ export default function ClientForm() {
   const [startTime, setStartTime] = useState('');
   const [musicNotes, setMusicNotes] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [smsOptIn, setSmsOptIn] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -107,6 +108,10 @@ export default function ClientForm() {
       setError('Please describe your venue type.');
       return;
     }
+    if (!smsOptIn) {
+      setError('Please agree to receive text messages to continue.');
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -134,6 +139,8 @@ export default function ClientForm() {
         package_name: pkgName,
         start_time: startTime || null,
         internal_notes: internalNotes || null,
+        sms_opt_in: true,
+        sms_opt_in_at: new Date().toISOString(),
       })
       .eq('id', booking.id);
 
@@ -453,6 +460,27 @@ export default function ClientForm() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* SMS Consent — required for 10DLC */}
+          <div
+            className="rounded-xl p-4"
+            style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <label className="flex items-start gap-3 cursor-pointer">
+              <div className="flex-shrink-0 mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={smsOptIn}
+                  onChange={(e) => setSmsOptIn(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
+                />
+              </div>
+              <span className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                I agree to receive text messages from <strong style={{ color: '#fff' }}>DJ KJ</strong> regarding my booking, including confirmations, reminders, and updates. Message and data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time. View our{' '}
+                <a href="/privacy" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a>.
+              </span>
+            </label>
           </div>
 
           {error && (
