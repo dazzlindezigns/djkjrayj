@@ -444,20 +444,6 @@ export default function BookingDetail() {
     }
   }
 
-  async function handleRescindContract() {
-    if (!booking) return;
-    if (!confirm("Rescind this contract? The client's signature will be cleared and they'll need to sign again.")) return;
-    setSaving(true);
-    setError('');
-    const { error: err } = await supabase
-      .from('bookings')
-      .update({ status: 'agreement_sent', client_signature: null, signed_at: null })
-      .eq('id', booking.id);
-    if (err) { setError(err.message); setSaving(false); return; }
-    showSuccess('Contract rescinded. Client will need to sign again.');
-    loadBooking();
-    setSaving(false);
-  }
 
   if (loading) {
     return (
@@ -892,12 +878,12 @@ export default function BookingDetail() {
                 </p>
               )}
               <button
-                onClick={handleRescindContract}
+                onClick={handleResendAgreement}
                 disabled={saving}
                 className="w-full py-2.5 rounded-xl font-semibold text-sm"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+                style={{ background: 'transparent', border: '1px solid rgba(99,102,241,0.4)', color: '#a78bfa' }}
               >
-                {saving ? 'Processing…' : 'Rescind Contract'}
+                {saving ? 'Sending…' : 'Resend Contract'}
               </button>
             </Section>
           )}
