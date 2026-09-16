@@ -115,6 +115,7 @@ export default function BookingDetail() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [contractSmsSent, setContractSmsSent] = useState(false);
   const [balanceReminderSent, setBalanceReminderSent] = useState(false);
   const [surveySent, setSurveySent] = useState(false);
 
@@ -412,6 +413,50 @@ export default function BookingDetail() {
     await navigator.clipboard.writeText(`${appUrl}/sign/${booking.id}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+  }
+
+  async function handleSendContractSMS() {
+    if (!booking || !client?.phone) return;
+    setSaving(true);
+    setError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const digits = client.phone.replace(/\D/g, '');
+      const to = digits.length === 10 ? `+1${digits}` : `+${digits}`;
+      const firstName = client.name?.split(' ')[0] ?? 'there';
+      const body = `Hi ${firstName}! Here's your DJ KJ booking agreement to review and sign:\n${signingLink}\n\nReply STOP to opt out.`;
+      const res = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ bookingId: booking.id, to, body }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Failed to send SMS');
+      setContractSmsSent(true);
+      showSuccess('Contract link sent via text!');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send SMS');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRescindContract() {
+    if (!booking) return;
+    if (!confirm("Rescind this contract? The client's signature will be cleared and they'll need to sign again.")) return;
+    setSaving(true);
+    setError('');
+    const { error: err } = await supabase
+      .from('bookings')
+      .update({ status: 'agreement_sent', client_signature: null, signed_at: null })
+      .eq('id', booking.id);
+    if (err) { setError(err.message); setSaving(false); return; }
+    showSuccess('Contract rescinded. Client will need to sign again.');
+    loadBooking();
+    setSaving(false);
   }
 
   if (loading) {
@@ -771,6 +816,16 @@ export default function BookingDetail() {
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
+              {client?.phone && (
+                <button
+                  onClick={handleSendContractSMS}
+                  disabled={saving || contractSmsSent}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm mb-3"
+                  style={{ background: contractSmsSent ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.12)', border: contractSmsSent ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(139,92,246,0.4)', color: contractSmsSent ? '#818cf8' : '#a78bfa' }}
+                >
+                  {contractSmsSent ? 'Contract Link Sent via Text ✓' : saving ? 'Sending…' : 'Send Contract Link via Text'}
+                </button>
+              )}
               <button
                 onClick={handleResendAgreement}
                 disabled={saving}
@@ -797,12 +852,22 @@ export default function BookingDetail() {
               <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 Deposit received but the client hasn't signed. Share the signing link:
               </p>
-              <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 rounded-xl p-3 mb-3" style={{ background: '#1a1a26', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-xs flex-1 truncate" style={{ color: '#3b82f6' }}>{signingLink}</span>
                 <button onClick={copySigningLink} className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0" style={{ background: '#3b82f6', color: '#fff' }}>
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
+              {client?.phone && (
+                <button
+                  onClick={handleSendContractSMS}
+                  disabled={saving || contractSmsSent}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm"
+                  style={{ background: contractSmsSent ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.12)', border: contractSmsSent ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(139,92,246,0.4)', color: contractSmsSent ? '#818cf8' : '#a78bfa' }}
+                >
+                  {contractSmsSent ? 'Contract Link Sent via Text ✓' : saving ? 'Sending…' : 'Send Contract Link via Text'}
+                </button>
+              )}
             </Section>
           )}
 
@@ -822,10 +887,18 @@ export default function BookingDetail() {
                 </p>
               )}
               {booking.client_signature && (
-                <p className="text-sm italic" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <p className="text-sm italic mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   Signed as: "{booking.client_signature}"
                 </p>
               )}
+              <button
+                onClick={handleRescindContract}
+                disabled={saving}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm"
+                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+              >
+                {saving ? 'Processing…' : 'Rescind Contract'}
+              </button>
             </Section>
           )}
 
