@@ -36,12 +36,6 @@ const VENUE_TYPES = [
   'Other',
 ];
 
-const PACKAGES = [
-  { value: 'Starter Set ($150)', label: 'Starter Set ($150)' },
-  { value: 'The Vibe ($275)', label: 'The Vibe ($275)' },
-  { value: 'Full Send ($400)', label: 'Full Send ($400)' },
-  { value: 'Not Sure Yet', label: 'Not Sure Yet' },
-];
 
 interface FormData {
   name: string;
@@ -592,9 +586,10 @@ export default function BookingLanding() {
                 <Field label="Package Preference">
                   <select name="package_preference" value={form.package_preference} onChange={handleChange}>
                     <option value="">Not sure yet…</option>
-                    {PACKAGES.map((p) => (
-                      <option key={p.value} value={p.value}>{p.label}</option>
+                    {packageData.map((p) => (
+                      <option key={p.formValue} value={p.formValue}>{p.formValue}</option>
                     ))}
+                    <option value="Not Sure Yet">Not Sure Yet</option>
                   </select>
                 </Field>
 
