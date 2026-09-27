@@ -224,29 +224,73 @@ export default function BookingLanding() {
         />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto' }}>
-          {/* Logo */}
+          {/* Logo + flanking photos */}
           <div
             style={{
-              width: 180,
-              height: 180,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'clamp(0.75rem, 3vw, 1.75rem)',
               margin: '0 auto 2rem',
-              borderRadius: '50%',
-              padding: '6px',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              boxShadow: '0 0 48px rgba(139,92,246,0.4), 0 0 80px rgba(59,130,246,0.2)',
+              width: '100%',
             }}
           >
-            <img
-              src="/icons/icon-512.png"
-              alt="DJ KJ Logo"
+            {/* Left photo */}
+            <div
               style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                display: 'block',
+                width: 'clamp(90px, 22vw, 150px)',
+                height: 'clamp(90px, 22vw, 150px)',
+                borderRadius: 16,
+                overflow: 'hidden',
+                border: '2px solid rgba(59,130,246,0.35)',
+                boxShadow: '0 0 24px rgba(59,130,246,0.2)',
+                flexShrink: 0,
               }}
-            />
+            >
+              <img
+                src="/photos/dj-kj-booth.jpg"
+                alt="DJ KJ at an event"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+              />
+            </div>
+
+            {/* Center logo */}
+            <div
+              style={{
+                width: 'clamp(120px, 28vw, 180px)',
+                height: 'clamp(120px, 28vw, 180px)',
+                borderRadius: '50%',
+                padding: '6px',
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                boxShadow: '0 0 48px rgba(139,92,246,0.4), 0 0 80px rgba(59,130,246,0.2)',
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src="/icons/icon-512.png"
+                alt="DJ KJ Logo"
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
+
+            {/* Right photo */}
+            <div
+              style={{
+                width: 'clamp(90px, 22vw, 150px)',
+                height: 'clamp(90px, 22vw, 150px)',
+                borderRadius: 16,
+                overflow: 'hidden',
+                border: '2px solid rgba(139,92,246,0.35)',
+                boxShadow: '0 0 24px rgba(139,92,246,0.2)',
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src="/photos/dj-kj-mixing.jpg"
+                alt="DJ KJ mixing live"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+              />
+            </div>
           </div>
 
           {/* Title */}
@@ -388,73 +432,6 @@ export default function BookingLanding() {
               onClick={() => setSelectedPackage(pkg)}
             />
           ))}
-        </div>
-      </section>
-
-      {/* ── Gallery ── */}
-      <section style={{ padding: '0 1.5rem 5rem', maxWidth: '1000px', margin: '0 auto' }}>
-        <h2
-          style={{
-            fontFamily: 'Orbitron, sans-serif',
-            fontWeight: 700,
-            fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-            textAlign: 'center',
-            marginBottom: '0.75rem',
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          DJ KJ Live
-        </h2>
-        <p
-          style={{
-            textAlign: 'center',
-            color: 'rgba(255,255,255,0.55)',
-            marginBottom: '2rem',
-            fontSize: '1.05rem',
-          }}
-        >
-          Bringing the energy to every event
-        </p>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1rem',
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 16,
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-              aspectRatio: '4/3',
-            }}
-          >
-            <img
-              src="/photos/dj-kj-booth.jpg"
-              alt="DJ KJ setup at an event"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          </div>
-          <div
-            style={{
-              borderRadius: 16,
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-              aspectRatio: '4/3',
-            }}
-          >
-            <img
-              src="/photos/dj-kj-mixing.jpg"
-              alt="DJ KJ mixing at a party"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', objectPosition: 'top' }}
-            />
-          </div>
         </div>
       </section>
 
