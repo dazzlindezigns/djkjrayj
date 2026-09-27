@@ -391,6 +391,73 @@ export default function BookingLanding() {
         </div>
       </section>
 
+      {/* ── Gallery ── */}
+      <section style={{ padding: '0 1.5rem 5rem', maxWidth: '1000px', margin: '0 auto' }}>
+        <h2
+          style={{
+            fontFamily: 'Orbitron, sans-serif',
+            fontWeight: 700,
+            fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+            textAlign: 'center',
+            marginBottom: '0.75rem',
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          DJ KJ Live
+        </h2>
+        <p
+          style={{
+            textAlign: 'center',
+            color: 'rgba(255,255,255,0.55)',
+            marginBottom: '2rem',
+            fontSize: '1.05rem',
+          }}
+        >
+          Bringing the energy to every event
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1rem',
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+              aspectRatio: '4/3',
+            }}
+          >
+            <img
+              src="/photos/dj-kj-booth.jpg"
+              alt="DJ KJ setup at an event"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+          <div
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+              aspectRatio: '4/3',
+            }}
+          >
+            <img
+              src="/photos/dj-kj-mixing.jpg"
+              alt="DJ KJ mixing at a party"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', objectPosition: 'top' }}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ── Booking Form ── */}
       <section
         ref={formRef}
