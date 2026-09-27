@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [filter, setFilter] = useState<'active' | 'completed' | 'cancelled' | 'all'>('active');
 
   useEffect(() => {
     registerPush();
@@ -96,10 +96,9 @@ export default function Dashboard() {
   const depositCount = bookings.filter((b) => DEPOSIT_STATUSES.includes(b.status)).length;
 
   const filteredBookings = bookings.filter((b) => {
-    if (filter === 'active')
-      return !['completed', 'cancelled'].includes(b.status);
-    if (filter === 'completed')
-      return ['completed', 'cancelled'].includes(b.status);
+    if (filter === 'active') return !['completed', 'cancelled'].includes(b.status);
+    if (filter === 'completed') return b.status === 'completed';
+    if (filter === 'cancelled') return b.status === 'cancelled';
     return true;
   });
 
@@ -203,7 +202,7 @@ export default function Dashboard() {
           className="flex gap-1 p-1 rounded-xl mb-5"
           style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.06)' }}
         >
-          {(['all', 'active', 'completed'] as const).map((f) => (
+          {(['active', 'completed', 'cancelled', 'all'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
