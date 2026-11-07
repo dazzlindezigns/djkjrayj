@@ -687,8 +687,8 @@ export default function BookingLanding() {
                     />
                     <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6 }}>
                       I agree to receive text messages from DJ KJ about my booking (confirmations, reminders, and updates).
-                      Message &amp; data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time.
-                      See our{' '}
+                      Message frequency varies. Message &amp; data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to
+                      opt out at any time or <strong style={{ color: '#fff' }}>HELP</strong> for help. See our{' '}
                       <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a>
                       {' '}and{' '}
                       <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Terms & Conditions</a>.
