@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import Login from './pages/Login';
@@ -11,6 +11,8 @@ import Survey from './pages/Survey';
 import PackageAdmin from './pages/PackageAdmin';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import { TelnyxProvider } from './lib/telnyx';
+import CallBanner from './components/CallBanner';
 import type { Session } from '@supabase/supabase-js';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -49,29 +51,19 @@ export default function App() {
       <Route path="/" element={<BookingLanding />} />
       <Route path="/login" element={<Login />} />
       <Route
-        path="/dashboard"
         element={
           <AuthGuard>
-            <Dashboard />
+            <TelnyxProvider>
+              <Outlet />
+              <CallBanner />
+            </TelnyxProvider>
           </AuthGuard>
         }
-      />
-      <Route
-        path="/dashboard/booking/:id"
-        element={
-          <AuthGuard>
-            <BookingDetail />
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/dashboard/packages"
-        element={
-          <AuthGuard>
-            <PackageAdmin />
-          </AuthGuard>
-        }
-      />
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/booking/:id" element={<BookingDetail />} />
+        <Route path="/dashboard/packages" element={<PackageAdmin />} />
+      </Route>
       <Route path="/book/:token" element={<ClientForm />} />
       <Route path="/sign/:id" element={<Sign />} />
       <Route path="/survey/:bookingId" element={<Survey />} />
