@@ -54,6 +54,7 @@ export default function Privacy() {
               <li>Communicate event details and logistics</li>
               <li>Send post-event follow-ups and satisfaction surveys</li>
               <li>Respond to your messages and inquiries</li>
+              <li>Send occasional promotional offers to past clients who have opted in</li>
             </ul>
             <p>We do not sell, rent, or share your personal information with third parties for marketing purposes.</p>
           </Section>
@@ -68,6 +69,7 @@ export default function Privacy() {
               <li>Payment reminders and receipts</li>
               <li>Event day logistics and check-ins</li>
               <li>Post-event follow-ups</li>
+              <li>Occasional promotional offers or discounts for returning clients</li>
             </ul>
             <p>
               <strong style={{ color: '#fff' }}>Message frequency</strong> varies based on your booking activity.{' '}
