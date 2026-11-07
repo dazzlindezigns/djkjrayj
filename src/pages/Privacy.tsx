@@ -22,7 +22,7 @@ export default function Privacy() {
             Privacy Policy
           </h1>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            DJ KJ · Pflugerville, TX · Last updated: September 2026
+            DJ KJ Sound Lab · Pflugerville, TX · Last updated: November 2026
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export default function Privacy() {
 
           <Section title="1. Who We Are">
             <p>
-              DJ KJ is a DJ and entertainment service based in Pflugerville, TX. This privacy policy explains how we collect,
+              DJ KJ Sound Lab ("DJ KJ") is a mobile DJ service based in Pflugerville, TX. This privacy policy explains how we collect,
               use, and protect your personal information when you use our booking platform at djkjatx.com.
             </p>
           </Section>
@@ -110,7 +110,7 @@ export default function Privacy() {
               className="rounded-xl p-4 mt-3"
               style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-              <p className="font-bold" style={{ color: '#fff' }}>DJ KJ</p>
+              <p className="font-bold" style={{ color: '#fff' }}>DJ KJ Sound Lab</p>
               <p>Pflugerville, TX</p>
               <p>CashApp: $Kjwasington37</p>
             </div>

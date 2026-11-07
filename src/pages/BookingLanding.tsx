@@ -774,7 +774,7 @@ export default function BookingLanding() {
             letterSpacing: '0.06em',
           }}
         >
-          DJ KJ · Pflugerville, TX
+          DJ KJ Sound Lab · Pflugerville, TX
         </p>
         <p
           style={{
@@ -793,7 +793,7 @@ export default function BookingLanding() {
             margin: 0,
           }}
         >
-          © 2025 DJ KJ. All rights reserved.
+          © 2026 DJ KJ Sound Lab. All rights reserved.
         </p>
         <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', justifyContent: 'center' }}>
           <a href="/privacy" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textDecoration: 'none' }}>

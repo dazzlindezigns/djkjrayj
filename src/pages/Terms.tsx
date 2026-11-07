@@ -22,7 +22,7 @@ export default function Terms() {
             Terms & Conditions
           </h1>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            DJ KJ · Pflugerville, TX · Last updated: September 2026
+            DJ KJ Sound Lab · Pflugerville, TX · Last updated: November 2026
           </p>
         </div>
 
@@ -30,7 +30,8 @@ export default function Terms() {
 
           <Section title="1. Agreement to Terms">
             <p>
-              By submitting a booking inquiry or using the djkjatx.com platform, you agree to these Terms & Conditions.
+              By submitting a booking inquiry or using the djkjatx.com platform, you agree to these Terms & Conditions
+              with DJ KJ Sound Lab ("DJ KJ").
               If you do not agree, please do not submit a booking request.
             </p>
           </Section>
@@ -143,7 +144,7 @@ export default function Terms() {
               className="rounded-xl p-4 mt-2"
               style={{ background: '#0f0f18', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <p className="font-bold" style={{ color: '#fff' }}>DJ KJ</p>
+              <p className="font-bold" style={{ color: '#fff' }}>DJ KJ Sound Lab</p>
               <p style={{ color: 'rgba(255,255,255,0.55)' }}>Pflugerville, TX · djkjatx.com</p>
             </div>
           </Section>
