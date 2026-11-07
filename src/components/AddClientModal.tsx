@@ -5,6 +5,7 @@ import { sendEmail } from '../lib/email';
 interface AddClientModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialPhone?: string;
 }
 
 type Mode = 'quick_book' | 'inquiry';
@@ -29,13 +30,13 @@ const PACKAGES = [
   { name: 'Custom', price: 0 },
 ];
 
-export default function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
+export default function AddClientModal({ onClose, onSuccess, initialPhone = '' }: AddClientModalProps) {
   const [mode, setMode] = useState<Mode>('inquiry');
 
   // Client fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(initialPhone);
   const [notes, setNotes] = useState('');
 
   // Quick Book event fields

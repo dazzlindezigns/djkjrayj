@@ -11,8 +11,6 @@ import Survey from './pages/Survey';
 import PackageAdmin from './pages/PackageAdmin';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
-import { TelnyxProvider } from './lib/telnyx';
-import CallBanner from './components/CallBanner';
 import type { Session } from '@supabase/supabase-js';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -53,10 +51,7 @@ export default function App() {
       <Route
         element={
           <AuthGuard>
-            <TelnyxProvider>
-              <Outlet />
-              <CallBanner />
-            </TelnyxProvider>
+            <Outlet />
           </AuthGuard>
         }
       >

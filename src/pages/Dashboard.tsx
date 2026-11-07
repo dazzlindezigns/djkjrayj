@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 import type { Booking, BookingStatus } from '../types';
 import BookingCard from '../components/BookingCard';
 import AddClientModal from '../components/AddClientModal';
+import RecentCalls from '../components/RecentCalls';
 
 interface StatCardProps {
   label: string;
@@ -36,6 +37,7 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [addPhone, setAddPhone] = useState('');
   const [filter, setFilter] = useState<'active' | 'completed' | 'cancelled' | 'all'>('active');
 
   useEffect(() => {
@@ -197,6 +199,8 @@ export default function Dashboard() {
           </button>
         </div>
 
+        <RecentCalls key={bookings.length} onAddClient={(phone) => { setAddPhone(phone); setShowAddModal(true); }} />
+
         {/* Filter tabs */}
         <div
           className="flex gap-1 p-1 rounded-xl mb-5"
@@ -249,7 +253,8 @@ export default function Dashboard() {
 
       {showAddModal && (
         <AddClientModal
-          onClose={() => setShowAddModal(false)}
+          initialPhone={addPhone}
+          onClose={() => { setShowAddModal(false); setAddPhone(''); }}
           onSuccess={() => {
             loadBookings();
           }}

@@ -17,6 +17,21 @@ export interface Client {
   notes?: string;
 }
 
+export type CallStatus = 'ringing' | 'connecting' | 'answered' | 'missed' | 'not_connected' | 'failed';
+
+export interface CallRecord {
+  id: string;
+  created_at: string;
+  direction: 'inbound' | 'outbound';
+  status: CallStatus;
+  client_number: string;
+  client_id: string | null;
+  booking_id: string | null;
+  caller_name: string | null;
+  duration_seconds: number | null;
+  dismissed: boolean;
+}
+
 export interface Booking {
   id: string;
   created_at: string;

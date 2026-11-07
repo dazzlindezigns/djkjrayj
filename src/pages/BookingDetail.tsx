@@ -974,7 +974,7 @@ export default function BookingDetail() {
           {/* ── Calls ── */}
           {!canConfirm && (
             <Section title="Call">
-              <CallInterface clientPhone={client?.phone} clientName={client?.name} />
+              <CallInterface clientPhone={client?.phone} clientName={client?.name} clientId={client?.id} bookingId={booking.id} />
             </Section>
           )}
 

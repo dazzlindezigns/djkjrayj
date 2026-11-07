@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { isSignedIn } from './_auth.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -9,6 +10,7 @@ const supabase = createClient(
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await isSignedIn(supabase, req))) return res.status(401).json({ error: 'Unauthorized' });
 
   const { bookingId, to, body } = req.body ?? {};
   if (!bookingId || !to || !body) {
