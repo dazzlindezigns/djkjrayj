@@ -13,6 +13,8 @@ const BUSINESS_NUMBER = process.env.TELNYX_PHONE_NUMBER ?? '';
 const OWNER_CELL = process.env.OWNER_CELL_NUMBER ?? '';
 const VOICE_TOKEN = process.env.TELNYX_VOICE_TOKEN ?? '';
 
+let accountSid = process.env.TELNYX_ACCOUNT_SID ?? '';
+
 type Params = Record<string, string | undefined>;
 
 interface CallRow {
@@ -61,6 +63,16 @@ function stepUrl(req: VercelRequest, step: string, id?: string) {
   const q = new URLSearchParams({ step, token: VOICE_TOKEN });
   if (id) q.set('id', id);
   return `${baseUrl(req)}/api/voice?${q.toString()}`;
+}
+
+async function getAccountSid() {
+  if (accountSid) return accountSid;
+  const r = await fetch('https://api.telnyx.com/v2/user_profile', {
+    headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
+  });
+  const json = await r.json().catch(() => null);
+  accountSid = json?.data?.user_id ?? '';
+  return accountSid;
 }
 
 async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | undefined> {
@@ -132,11 +144,12 @@ async function start(req: VercelRequest, res: VercelResponse) {
   const to = toE164(number ?? '');
   if (!/^\+1[2-9]\d{9}$/.test(to)) return res.status(400).json({ error: 'Enter a valid US phone number' });
 
-  const accountSid = process.env.TELNYX_ACCOUNT_SID;
   const appId = process.env.TELNYX_TEXML_APP_ID;
-  if (!accountSid || !appId || !OWNER_CELL || !BUSINESS_NUMBER || !VOICE_TOKEN) {
+  if (!appId || !OWNER_CELL || !BUSINESS_NUMBER || !VOICE_TOKEN) {
     return res.status(500).json({ error: 'Calling is not configured yet' });
   }
+  const sid = await getAccountSid();
+  if (!sid) return res.status(500).json({ error: 'Could not look up the Telnyx account — check TELNYX_API_KEY' });
 
   const { data: row, error } = await supabase
     .from('calls')
@@ -152,7 +165,7 @@ async function start(req: VercelRequest, res: VercelResponse) {
     .single();
   if (error || !row) return res.status(500).json({ error: error?.message ?? 'Could not log call' });
 
-  const telnyx = await fetch(`https://api.telnyx.com/v2/texml/Accounts/${accountSid}/Calls`, {
+  const telnyx = await fetch(`https://api.telnyx.com/v2/texml/Accounts/${sid}/Calls`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
