@@ -108,11 +108,6 @@ export default function ClientForm() {
       setError('Please describe your venue type.');
       return;
     }
-    if (!smsOptIn) {
-      setError('Please agree to receive text messages to continue.');
-      return;
-    }
-
     setSubmitting(true);
     setError('');
 
@@ -139,8 +134,8 @@ export default function ClientForm() {
         package_name: pkgName,
         start_time: startTime || null,
         internal_notes: internalNotes || null,
-        sms_opt_in: true,
-        sms_opt_in_at: new Date().toISOString(),
+        sms_opt_in: smsOptIn,
+        sms_opt_in_at: smsOptIn ? new Date().toISOString() : null,
       })
       .eq('id', booking.id);
 
@@ -462,7 +457,7 @@ export default function ClientForm() {
             </div>
           </div>
 
-          {/* SMS Consent — required for 10DLC */}
+          {/* SMS consent — must stay optional for 10DLC */}
           <div
             className="rounded-xl p-4"
             style={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -477,7 +472,7 @@ export default function ClientForm() {
                 />
               </div>
               <span className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                I agree to receive text messages from <strong style={{ color: '#fff' }}>DJ KJ</strong> regarding my booking, including confirmations, reminders, and updates, as well as occasional promotional offers. Message frequency varies. Message and data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time or <strong style={{ color: '#fff' }}>HELP</strong> for help. View our{' '}
+                <strong style={{ color: 'rgba(255,255,255,0.85)' }}>(Optional)</strong> I agree to receive text messages from <strong style={{ color: '#fff' }}>DJ KJ Sound Lab</strong> regarding my booking, including confirmations, reminders, and updates, as well as occasional promotional offers. Consent is not a condition of booking. Message frequency varies. Message and data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time or <strong style={{ color: '#fff' }}>HELP</strong> for help. View our{' '}
                 <a href="/privacy" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a> and{' '}
                 <a href="/terms" style={{ color: '#818cf8', textDecoration: 'underline' }}>Terms & Conditions</a>.
               </span>

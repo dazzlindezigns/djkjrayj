@@ -116,8 +116,10 @@ export default function Terms() {
 
           <Section title="9. Text Message Communications">
             <p>
-              By opting in to SMS communications on our booking form, you agree to receive text messages related to
-              your booking. You may opt out at any time by replying <strong style={{ color: '#fff' }}>STOP</strong>.
+              Text messaging is optional and is not required to book. By checking the text message box on our booking
+              form, you agree to receive text messages from DJ KJ Sound Lab related to your booking and occasional
+              promotional offers. Message frequency varies. Message and data rates may apply. You may opt out at any
+              time by replying <strong style={{ color: '#fff' }}>STOP</strong>, or reply <strong style={{ color: '#fff' }}>HELP</strong> for help.
               See our <a href="/privacy" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a> for
               full details on how your information is handled.
             </p>

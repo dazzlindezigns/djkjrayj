@@ -17,6 +17,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'bookingId, to, and body are required' });
   }
 
+  const { data: booking } = await supabase.from('bookings').select('sms_opt_in').eq('id', bookingId).maybeSingle();
+  if (!booking?.sms_opt_in) {
+    const { count } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('booking_id', bookingId)
+      .eq('direction', 'inbound');
+    if (!count) {
+      return res.status(403).json({ error: "This client hasn't opted in to text messages." });
+    }
+  }
+
   const from = process.env.TELNYX_PHONE_NUMBER!;
 
   const telnyxRes = await fetch('https://api.telnyx.com/v2/messages', {

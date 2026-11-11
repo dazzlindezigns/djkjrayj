@@ -139,11 +139,6 @@ export default function BookingLanding() {
       setError('Please describe your venue.');
       return;
     }
-    if (!smsOptIn) {
-      setError('Please agree to receive text message updates to continue.');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -155,8 +150,8 @@ export default function BookingLanding() {
           guest_count: form.guest_count ? Number(form.guest_count) : undefined,
           event_type_other: form.event_type === 'Other' ? eventTypeOther : undefined,
           venue_type: venueType === 'Other' ? venueTypeOther : venueType,
-          sms_opt_in: true,
-          sms_opt_in_at: new Date().toISOString(),
+          sms_opt_in: smsOptIn,
+          sms_opt_in_at: smsOptIn ? new Date().toISOString() : undefined,
         }),
       });
 
@@ -686,13 +681,14 @@ export default function BookingLanding() {
                       style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: '#8b5cf6', cursor: 'pointer' }}
                     />
                     <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6 }}>
-                      I agree to receive text messages from DJ KJ about my booking (confirmations, reminders, and updates)
-                      and occasional promotional offers. Message frequency varies. Message &amp; data rates may apply. Reply <strong style={{ color: '#fff' }}>STOP</strong> to
-                      opt out at any time or <strong style={{ color: '#fff' }}>HELP</strong> for help. See our{' '}
+                      <strong style={{ color: 'rgba(255,255,255,0.85)' }}>(Optional)</strong> I agree to receive text messages from
+                      DJ KJ Sound Lab about my booking (confirmations, reminders, and updates) and occasional promotional offers.
+                      Consent is not a condition of booking. Message frequency varies. Message &amp; data rates may apply.
+                      Reply <strong style={{ color: '#fff' }}>STOP</strong> to opt out at any time or <strong style={{ color: '#fff' }}>HELP</strong> for help.
+                      See our{' '}
                       <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Privacy Policy</a>
                       {' '}and{' '}
                       <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>Terms & Conditions</a>.
-                      {' '}<span style={{ color: '#8b5cf6' }}>*</span>
                     </span>
                   </label>
                 </div>

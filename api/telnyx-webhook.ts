@@ -7,6 +7,9 @@ const supabase = createClient(
   { db: { schema: 'djkj' } }
 );
 
+const STOP_WORDS = new Set(['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']);
+const START_WORDS = new Set(['START', 'UNSTOP']);
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -38,6 +41,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     if (matched) {
+      const keyword = body.trim().toUpperCase();
+      if (STOP_WORDS.has(keyword)) {
+        await supabase.from('bookings').update({ sms_opt_in: false }).eq('client_id', matched.id);
+      } else if (START_WORDS.has(keyword)) {
+        await supabase
+          .from('bookings')
+          .update({ sms_opt_in: true, sms_opt_in_at: new Date().toISOString() })
+          .eq('client_id', matched.id);
+      }
+
       const { data: bookings } = await supabase
         .from('bookings')
         .select('id')
@@ -71,6 +84,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // Call events — just acknowledge for now; WebRTC handles the media
   res.status(200).json({ received: true });
 }

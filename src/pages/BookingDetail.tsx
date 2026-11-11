@@ -537,7 +537,10 @@ export default function BookingDetail() {
                 <div className="col-span-2"><Field label="Name" value={client?.name} /></div>
                 <Field label="Email" value={client?.email} />
                 <Field label="Phone" value={client?.phone} />
-                {client?.notes && <div className="col-span-2"><Field label="Notes" value={client.notes} /></div>}
+                <div className="col-span-2">
+                  <Field label="Text Messages" value={booking.sms_opt_in ? 'Opted in' : 'Not opted in — business texts disabled'} />
+                </div>
+                {client?.notes &&<div className="col-span-2"><Field label="Notes" value={client.notes} /></div>}
                 {(client?.phone || client?.email) && (
                   <div className="col-span-2 flex gap-2 pt-1">
                     {client?.phone && (
@@ -802,7 +805,7 @@ export default function BookingDetail() {
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
-              {client?.phone && (
+              {client?.phone && booking.sms_opt_in && (
                 <button
                   onClick={handleSendContractSMS}
                   disabled={saving || contractSmsSent}
@@ -844,7 +847,7 @@ export default function BookingDetail() {
                   {copiedLink ? 'Copied!' : 'Copy'}
                 </button>
               </div>
-              {client?.phone && (
+              {client?.phone && booking.sms_opt_in && (
                 <button
                   onClick={handleSendContractSMS}
                   disabled={saving || contractSmsSent}
